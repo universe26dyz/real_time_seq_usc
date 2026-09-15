@@ -1,0 +1,173 @@
+{
+  "project": {
+    "name": "UIH_RTSpiral_RealTime",
+    "purpose": "multi-slice real-time spiral bSSFP for CR-DREME",
+    "scanner_target": "uMR 790",
+    "field_strength_T": 3.0,
+    "config_version": "v0.1",
+    "parameter_metadata": {
+      "name": {"unit": "string", "source": "project configuration", "note": "Written to the UIH Name definition."},
+      "field_strength_T": {"unit": "T", "source": "uMR 790 capability reference", "note": "Scanner field strength for the target platform."}
+    }
+  },
+  "provenance": {
+    "primary_sequence_repo": "https://github.com/usc-mrel/rtspiral_pypulseq",
+    "primary_sequence_commit": "5d32a138e84ce3df1303c4a98d52739611e6ec9c",
+    "primary_source_file": "write_rtspiral_svr.py",
+    "reference_protocol_file": "protocols/freemax_svr_sax.toml",
+    "uih_system_repo": "https://github.com/nimpulseq/PulseqSystems",
+    "uih_system_commit": "d85ba90c473b6d7eca49806e10545df427965e41",
+    "uih_system_file": "src/pulseq_systems/json/MRSystems.json",
+    "uih_manual": "uMR Pulseq User Guide v1.1.0, 2025-08-01"
+  },
+  "scanner_system": {
+    "max_grad_mT_per_m": 15.0,
+    "max_slew_T_per_m_per_s": 32.0,
+    "grad_raster_time_s": 1e-05,
+    "rf_raster_time_s": 1e-06,
+    "rf_ringdown_time_s": 1e-05,
+    "rf_dead_time_s": 0.0004,
+    "adc_dead_time_s": 7e-05,
+    "parameter_metadata": {
+      "max_grad_mT_per_m": {"unit": "mT/m", "source": "USC freemax_svr_sax.toml", "note": "Conservative value below uMR 790 capability."},
+      "max_slew_T_per_m_per_s": {"unit": "T/m/s", "source": "USC freemax_svr_sax.toml", "note": "Conservative value below uMR 790 capability."},
+      "grad_raster_time_s": {"unit": "s", "source": "uMR Pulseq User Guide v1.1.0", "note": "UIH gradient raster."},
+      "rf_raster_time_s": {"unit": "s", "source": "uMR Pulseq User Guide v1.1.0", "note": "Allowed 100 ns multiple selected for RF waveform size."},
+      "rf_ringdown_time_s": {"unit": "s", "source": "uMR Pulseq User Guide v1.1.0", "note": "UIH-compatible ringdown time."},
+      "rf_dead_time_s": {"unit": "s", "source": "uMR Pulseq User Guide v1.1.0", "note": "RF-to-RF and ADC-to-RF minimum interval."},
+      "adc_dead_time_s": {"unit": "s", "source": "uMR Pulseq User Guide v1.1.0", "note": "ADC dead time."}
+    }
+  },
+  "spiral": {
+    "contrast": "trueFISP",
+    "arm_ordering": "ga",
+    "ga_angle_deg": 222.4969,
+    "slew_ratio": 0.9,
+    "readout_duration_s": 0.0025,
+    "adc_dwell_s": 2e-06,
+    "rewinder_method": "gropt",
+    "rewinder_time_s": 0.003,
+    "m1_nulling": true,
+    "rotate_grads": true,
+    "trajectory_design_fov_mm": 360.0,
+    "parameter_metadata": {
+      "contrast": {"unit": "string", "source": "USC RTSpiral", "note": "bSSFP contrast mode."},
+      "arm_ordering": {"unit": "string", "source": "USC RTSpiral", "note": "Golden-angle arm ordering."},
+      "ga_angle_deg": {"unit": "deg", "source": "USC RTSpiral", "note": "Golden-angle arm rotation."},
+      "slew_ratio": {"unit": "dimensionless", "source": "USC RTSpiral", "note": "Fraction of the slew limit used by trajectory design."},
+      "readout_duration_s": {"unit": "s", "source": "USC RTSpiral", "note": "Base-arm readout duration."},
+      "adc_dwell_s": {"unit": "s", "source": "USC RTSpiral", "note": "ADC sampling dwell."},
+      "rewinder_method": {"unit": "string", "source": "USC RTSpiral", "note": "Gradient rewinder implementation."},
+      "rewinder_time_s": {"unit": "s", "source": "USC RTSpiral", "note": "Requested gropt solver upper bound; actual waveform duration is resolved during generation."}
+      ,"m1_nulling": {"unit": "boolean", "source": "USC RTSpiral", "note": "Enable first-moment nulling."}
+      ,"rotate_grads": {"unit": "boolean", "source": "USC RTSpiral", "note": "Rotate the base gradient for each golden-angle arm."}
+      ,"trajectory_design_fov_mm": {"unit": "mm", "source": "derived from max(geometry.fov_mm)", "note": "Radial FOV profile for vds_fixed_ro; not a paper parameter."}
+    }
+  },
+  "rf": {
+    "flip_angle_deg": 100.0,
+    "rf_duration_s": 0.0008,
+    "time_bandwidth_product": 1.8,
+    "fa_schedule_enabled": false,
+    "parameter_metadata": {
+      "flip_angle_deg": {"unit": "deg", "source": "target acquisition protocol", "note": "Real-time bSSFP flip angle."},
+      "rf_duration_s": {"unit": "s", "source": "USC RTSpiral", "note": "RF pulse duration."},
+      "time_bandwidth_product": {"unit": "dimensionless", "source": "USC RTSpiral", "note": "RF pulse time-bandwidth product."},
+      "fa_schedule_enabled": {"unit": "boolean", "source": "target acquisition protocol", "note": "Flip-angle scheduling is disabled."}
+    }
+  },
+  "target_timing": {
+    "te_ms": 0.74,
+    "tr_ms": 5.67,
+    "frame_time_ms": 40.0,
+    "slice_dwell_time_s": 2.0,
+    "parameter_metadata": {
+      "te_ms": {"unit": "ms", "source": "target acquisition protocol", "note": "Target only; actual TE must be reported."},
+      "tr_ms": {"unit": "ms", "source": "target acquisition protocol", "note": "Target only; actual TR must be reported."},
+      "frame_time_ms": {"unit": "ms", "source": "target acquisition protocol", "note": "Target real-time frame duration."},
+      "slice_dwell_time_s": {"unit": "s", "source": "target acquisition protocol", "note": "Approximate continuous acquisition duration per slice."}
+    }
+  },
+  "realtime": {
+    "arms_per_frame": 7,
+    "frames_per_slice": 50,
+    "trs_per_slice": 350,
+    "expected_frame_time_ms_at_target_tr": 39.69,
+    "expected_slice_time_s_at_target_tr": 1.9845,
+    "parameter_metadata": {
+      "arms_per_frame": {"unit": "arms", "source": "target acquisition protocol", "note": "Seven arms form one real-time frame."},
+      "frames_per_slice": {"unit": "frames", "source": "target acquisition protocol", "note": "Fifty consecutive frames per slice."},
+      "trs_per_slice": {"unit": "TRs", "source": "derived", "note": "arms_per_frame multiplied by frames_per_slice."},
+      "expected_frame_time_ms_at_target_tr": {"unit": "ms", "source": "derived", "note": "7 multiplied by target TR."},
+      "expected_slice_time_s_at_target_tr": {"unit": "s", "source": "derived", "note": "350 multiplied by target TR."}
+    }
+  },
+  "geometry": {
+    "inplane_resolution_mm": [1.5, 1.5],
+    "slice_thickness_mm": 6.0,
+    "slice_shift_mm": 2.0,
+    "num_slices": 60,
+    "typical_num_slices_range": [50, 70],
+    "fov_mm": [360.0, 320.0],
+    "matrix": null,
+    "parameter_metadata": {
+      "inplane_resolution_mm": {"unit": "mm", "source": "target acquisition protocol", "note": "Requested in-plane voxel size."},
+      "slice_thickness_mm": {"unit": "mm", "source": "target acquisition protocol", "note": "Physical UIH slice thickness, not slab thickness."},
+      "slice_shift_mm": {"unit": "mm", "source": "target acquisition protocol", "note": "Overlapping-slice centre spacing."},
+      "num_slices": {"unit": "slices", "source": "phantom default", "note": "Configurable; protocol usually uses 50-70 slices."},
+      "typical_num_slices_range": {"unit": "slices", "source": "target acquisition protocol", "note": "Permitted typical stack range."},
+      "fov_mm": {"unit": "mm", "source": "user_specified", "note": "Readout and phase FOV supplied by the user."},
+      "matrix": {"unit": "samples", "source": "derived during trajectory generation", "note": "Unset because 320 mm / 1.5 mm is non-integral."}
+    }
+  },
+  "triggers": {
+    "physio_trigger_enabled": false,
+    "external_ttl_enabled": false,
+    "parameter_metadata": {
+      "physio_trigger_enabled": {"unit": "boolean", "source": "user requirement", "note": "ECG and respiratory triggering are disabled."},
+      "external_ttl_enabled": {"unit": "boolean", "source": "user requirement", "note": "External TTL is disabled."}
+    }
+  },
+  "labels": {
+    "slice_label": "SLC",
+    "frame_label": "REP",
+    "arm_in_frame_label": "LIN",
+    "parameter_metadata": {
+      "slice_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Slice index label."},
+      "frame_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Real-time frame index label."},
+      "arm_in_frame_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Arm index within frame label."}
+    }
+  },
+  "uih_definitions": {
+    "dimension": 2,
+    "write_slice_positions": true,
+    "write_center": true,
+    "write_matrix": false,
+    "write_resolution": false,
+    "parameter_metadata": {
+      "dimension": {"unit": "dimension", "source": "UIH 2D sequence requirement", "note": "Sequence dimension definition."},
+      "write_slice_positions": {"unit": "boolean", "source": "UIH 2D sequence requirement", "note": "Write actual slice centres."},
+      "write_center": {"unit": "boolean", "source": "UIH 2D sequence requirement", "note": "Write sequence centre."},
+      "write_matrix": {"unit": "boolean", "source": "configuration", "note": "Matrix is deferred while it is unresolved."},
+      "write_resolution": {"unit": "boolean", "source": "configuration", "note": "Resolution definition is deferred with matrix."}
+    }
+  },
+  "output": {
+    "write_seq": true,
+    "write_trajectory_mat": true,
+    "write_resolved_json": true,
+    "write_generation_report": true,
+    "seq_dir": "out_seq",
+    "trajectory_dir": "out_trajectory",
+    "report_dir": "reports",
+    "parameter_metadata": {
+      "write_seq": {"unit": "boolean", "source": "project requirement", "note": "Emit the Pulseq sequence."},
+      "write_trajectory_mat": {"unit": "boolean", "source": "project requirement", "note": "Emit trajectory metadata."},
+      "write_resolved_json": {"unit": "boolean", "source": "project requirement", "note": "Emit resolved configuration."},
+      "write_generation_report": {"unit": "boolean", "source": "project requirement", "note": "Emit generation report."},
+      "seq_dir": {"unit": "path", "source": "project layout", "note": "Sequence output directory."},
+      "trajectory_dir": {"unit": "path", "source": "project layout", "note": "Trajectory output directory."},
+      "report_dir": {"unit": "path", "source": "project layout", "note": "Report output directory."}
+    }
+  }
+}

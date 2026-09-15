@@ -1,0 +1,868 @@
+{
+  "_metadata": {
+    "description": "MRI system gradient and field specifications for the four major human MRI manufacturers",
+    "date_compiled": "2026-02-18",
+    "units": {
+      "B0_field_strength": "T",
+      "max_gradient_strength": "mT/m",
+      "max_slew_rate": "T/m/s"
+    },
+    "notes": [
+      "All gradient specs are per-axis values unless otherwise noted.",
+      "Many systems ship with multiple gradient tier options; where applicable, all known configurations are listed.",
+      "Sources are from manufacturer product pages, datasheets, press releases, and verified third-party listings.",
+      "For dual-mode gradients (e.g. Philips Quasar Dual), max amplitude and max slew rate may not be achievable simultaneously."
+    ]
+  },
+  "Siemens Healthineers": {
+    "MAGNETOM Terra X": {
+      "category": "newest_7T",
+      "B0_field_strength_T": 7.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 135,
+          "max_slew_rate_T_per_m_per_s": 250,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2023,
+      "notes": "Next-generation 7T with Ultra IQ Technology and dynamic 8-channel parallel transmit. Successor to MAGNETOM Terra.",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/magnetic-resonance-imaging/7t-mri-scanner/magnetom-terra-x",
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/7t-mri-scanner/magnetom-terra-x"
+      ]
+    },
+    "MAGNETOM Terra": {
+      "category": "first_clinical_7T",
+      "B0_field_strength_T": 7.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "XR Gradients": {
+          "max_gradient_strength_mT_per_m": 80,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2017,
+      "notes": "First 7T MRI with FDA clearance for clinical diagnostic imaging. Dual Mode for clinical/research switching. Some sites report AC84 head gradient at 80 mT/m / 350 T/m/s.",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/7t-mri-scanner/magnetom-terra",
+        "https://bic.beckman.illinois.edu/magnetic-resonance-imaging/7t"
+      ]
+    },
+    "MAGNETOM Cima X": {
+      "category": "newest_flagship_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "Gemini Gradients": {
+          "max_gradient_strength_mT_per_m": 200,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2024,
+      "FDA_clearance": "2024-01-04",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/3t-mri-scanner/magnetom-cima-x",
+        "https://appliedradiology.com/articles/us-fda-clears-siemens-magnetom-cima-x-3t-mri-system"
+      ]
+    },
+    "MAGNETOM Vida": {
+      "category": "current_generation_clinical_flagship_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XT Gradients": {
+          "max_gradient_strength_mT_per_m": 60,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        },
+        "XQ Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2017,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/3t-mri-scanner/magnetom-vida",
+        "https://www.auntminnie.com/clinical-news/mri/article/15617005/siemens-to-launch-new-3t-vida-mri-scanner-at-ecr-2017"
+      ]
+    },
+    "MAGNETOM Lumina": {
+      "category": "current_generation_entry_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XJ Gradients": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        },
+        "XQ Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/3t-mri-scanner/magnetom-lumina",
+        "https://www.meridianleasing.com/resources/blog/what-to-know-about-siemens-mri"
+      ]
+    },
+    "MAGNETOM Prisma": {
+      "category": "research_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "XR 80 200 Gradients": {
+          "max_gradient_strength_mT_per_m": 80,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2013,
+      "notes": "Research-focused system widely used for Human Connectome Project-style protocols.",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/magnetic-resonance-imaging/3t-mri-scanner/magnetom-prisma",
+        "https://health.ucdavis.edu/irc/content/facilities/siemenstimtrio.html"
+      ]
+    },
+    "MAGNETOM Skyra": {
+      "category": "widely_installed_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XQ Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2012,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/3t-mri-scanner/magnetom-skyra",
+        "https://clinicalimagingsystems.com/product/siemens-magnetom-skyra-3t-mri-scanner/"
+      ]
+    },
+    "MAGNETOM Sola": {
+      "category": "current_generation_premium_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XJ Gradients standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        },
+        "XQ Gradients optional": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/0-35-to-1-5t-mri-scanner/magnetom-sola",
+        "https://www.siemens-healthineers.com/magnetic-resonance-imaging/0-35-to-1-5t-mri-scanner/magnetom-sola-cardiovascular-edition"
+      ]
+    },
+    "MAGNETOM Aera": {
+      "category": "most_widely_installed_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XJ Gradients standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        },
+        "XQ Gradients optional": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2012,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/0-35-to-1-5t-mri-scanner/magnetom-aera"
+      ]
+    },
+    "MAGNETOM Altea": {
+      "category": "current_generation_entry_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XJ Gradients": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        },
+        "XQ Gradients optional": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://www.siemens-healthineers.com/en-us/magnetic-resonance-imaging/0-35-to-1-5t-mri-scanner/magnetom-altea"
+      ]
+    },
+    "MAGNETOM Avanto Fit": {
+      "category": "legacy_widely_installed_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "SQ Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2014,
+      "notes": "Updated version of the original MAGNETOM Avanto (2003). 60 cm bore.",
+      "source_urls": [
+        "https://wiki.jlab.org/klproject/images/c/c8/MAGNETOM_Avanto-fit_data_sheet_E11C-min.pdf"
+      ]
+    },
+    "MAGNETOM Free Max": {
+      "category": "low_field_0.55T",
+      "B0_field_strength_T": 0.55,
+      "bore_diameter_cm": 80,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 25,
+          "max_slew_rate_T_per_m_per_s": 55,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2021,
+      "notes": "First and only 80 cm bore MRI. Helium-free DryCool magnet (no liquid helium). High-V MRI concept combining 0.55T with Deep Resolve AI reconstruction. Weight only 3.2 tonnes.",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/magnetic-resonance-imaging/high-v-mri/magnetom-free-max",
+        "https://www.wotol.com/product/siemens-magnetom-free-max/2660142"
+      ]
+    },
+    "MAGNETOM Free Star": {
+      "category": "low_field_0.55T_budget",
+      "B0_field_strength_T": 0.55,
+      "bore_diameter_cm": 80,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 25,
+          "max_slew_rate_T_per_m_per_s": 55,
+          "is_gradient_strength_per_axis": false,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2023,
+      "notes": "Budget variant of Free.Max with same magnet/gradient hardware but reduced software/coil configuration.",
+      "source_urls": [
+        "https://www.siemens-healthineers.com/magnetic-resonance-imaging/high-v-mri/magnetom-free-star"
+      ]
+    }
+  },
+  "GE HealthCare": {
+    "SIGNA Bolt": {
+      "category": "newest_flagship_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "SuperXG Gradients": {
+          "max_gradient_strength_mT_per_m": 80,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2025,
+      "FDA_clearance": "pending",
+      "notes": "Announced at RSNA 2025. 510(k) pending.",
+      "source_urls": [
+        "https://www.gehealthcare.com/products/magnetic-resonance-imaging/3t-mri-scanners/signa-bolt-wide-bore-mri-scanner"
+      ]
+    },
+    "SIGNA Premier": {
+      "category": "current_generation_premium_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "SuperG Gradients": {
+          "max_gradient_strength_mT_per_m": 80,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2017,
+      "source_urls": [
+        "https://www.gehealthcare.com/products/magnetic-resonance-imaging/signa-evo/premier-3-0t",
+        "https://nyspi.org/sites/default/files/inline-files/SIGNA%20Premier_Spec%20Sheet_FDA%20Cleared_Final%20071717.pdf"
+      ]
+    },
+    "SIGNA Hero": {
+      "category": "current_generation_mid_range_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 44,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2022,
+      "notes": "Designed with 70% less helium than conventional systems.",
+      "source_urls": [
+        "https://www.auntminnie.com/clinical-news/molecular-imaging/nuclear-medicine/article/15629905/ge-targets-radiology-efficiency-with-new-product-launches",
+        "https://www.wotol.com/product/ge-signa-hero-3-0t-mri/2660151"
+      ]
+    },
+    "SIGNA MAGNUS": {
+      "category": "newest_head_only_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": null,
+      "gradient_configurations": {
+        "HyperG head gradient": {
+          "max_gradient_strength_mT_per_m": 300,
+          "max_slew_rate_T_per_m_per_s": 750,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2025,
+      "notes": "Head-only MRI with asymmetrical gradient coil. NOT a whole-body system. FDA cleared Dec 2025.",
+      "source_urls": [
+        "https://www.diagnosticimaging.com/view/3t-head-only-mri-system-gets-fda-clearance",
+        "https://xtalks.com/how-ge-healthcares-signa-magnus-3-0t-transforms-neuroimaging-3963/"
+      ]
+    },
+    "SIGNA Artist": {
+      "category": "most_widely_installed_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XRM Gradients": {
+          "max_gradient_strength_mT_per_m": 44,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2016,
+      "notes": "Also available as Artist Evo upgrade from legacy 60 cm GE systems.",
+      "source_urls": [
+        "https://landing1.gehealthcare.com/rs/005-SHS-767/images/Artist_Datasheet.pdf",
+        "https://www.gehealthcare.com/products/magnetic-resonance-imaging/1-5t-mri-scanners/signa-artist-wide-bore-mri-scanner"
+      ]
+    },
+    "SIGNA Explorer": {
+      "category": "widely_installed_entry_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 120,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2014,
+      "source_urls": [
+        "https://www.gehealthcare.com/products/magnetic-resonance-imaging/1-5t-mri-scanners/signa-explorer-mri-scanner"
+      ]
+    },
+    "Discovery MR750w": {
+      "category": "legacy_widely_installed_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 44,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2012,
+      "source_urls": [
+        "https://www.medicalimagingsource.com/ge-mri-scanner-models"
+      ]
+    },
+    "SIGNA MR750": {
+      "category": "legacy_research_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "eXtreme Gradients": {
+          "max_gradient_strength_mT_per_m": 50,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2009,
+      "source_urls": [
+        "https://www.diagnosticimaging.com/view/ges-signa-mr750-brings-new-power-simplicity-3t"
+      ]
+    }
+  },
+  "Philips Healthcare": {
+    "Achieva 7T": {
+      "category": "research_7T",
+      "B0_field_strength_T": 7.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "dual mode high slew": {
+          "max_gradient_strength_mT_per_m": 40,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        },
+        "dual mode high amplitude": {
+          "max_gradient_strength_mT_per_m": 60,
+          "max_slew_rate_T_per_m_per_s": 100,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2007,
+      "notes": "Research-only 7T platform. Gradient specs vary by installation and upgrade level; older units had 33 mT/m / 166 T/m/s. Dual-mode values shown are for upgraded configurations.",
+      "source_urls": [
+        "https://www.lbic.lu.se/explore-our-infrastructure/national-7t-facility/equipment",
+        "https://www.documents.philips.com/doclib/enc/fetch/2000/4504/577242/577256/588821/5050628/5313460/6172193/07_Webb_Vol_53.pdf"
+      ]
+    },
+    "MR 7700": {
+      "category": "newest_flagship_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "XP Gradients": {
+          "max_gradient_strength_mT_per_m": 65,
+          "max_slew_rate_T_per_m_per_s": 220,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2022,
+      "notes": "Supports multi-nuclei imaging (23Na, 31P, 13C, 19F, 129Xe). Highest simultaneous slew rate on a clinical whole-body system.",
+      "source_urls": [
+        "https://www.usa.philips.com/healthcare/product/HCNMRF429/mr-7700"
+      ]
+    },
+    "Ingenia Elition 3T X": {
+      "category": "current_generation_premium_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "Vega HP Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 220,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://www.usa.philips.com/healthcare/product/HC782118/smartpath-to-ingenia-elition-30t-x",
+        "https://healthtechghana.com/product/philips-ingenia-elition-3-0t-x/"
+      ]
+    },
+    "Ingenia 3T": {
+      "category": "widely_installed_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "dual mode high slew": {
+          "max_gradient_strength_mT_per_m": 40,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "notes": "High slew rate mode",
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        },
+        "dual mode high amplitude": {
+          "max_gradient_strength_mT_per_m": 80,
+          "max_slew_rate_T_per_m_per_s": 100,
+          "notes": "High amplitude mode",
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2012,
+      "source_urls": [
+        "https://www.cincinnatichildrens.org/research/shared-facilities/imaging-research/equipment"
+      ]
+    },
+    "Ingenia Ambition 1 5T X": {
+      "category": "current_generation_helium_free_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "Omega HP Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2019,
+      "notes": "BlueSeal helium-free magnet (~7 liters sealed helium). Over 2000 installations as of RSNA 2025.",
+      "source_urls": [
+        "https://www.usa.philips.com/healthcare/product/HC781356/ingenia-ambition-excel-in-your-daily-mr-services-helium-free",
+        "https://www.mediscala.com/item/ingenia-ambition-1-5t-x/"
+      ]
+    },
+    "Ingenia 1 5T": {
+      "category": "most_widely_installed_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "Omega HP Gradients": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        },
+        "Omega standard Gradients": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 120,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2010,
+      "notes": "World's first fully digital broadband MRI. Multiple variants: Ingenia, Ingenia CX, Ingenia Evolution.",
+      "source_urls": [
+        "https://www.usa.philips.com/healthcare/product/HC781315/ingenia-15t-evolution"
+      ]
+    },
+    "Achieva 1 5T": {
+      "category": "legacy_widely_installed_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 180,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        },
+        "Quasar Dual maximum amplitude mode": {
+          "max_gradient_strength_mT_per_m": 66,
+          "max_slew_rate_T_per_m_per_s": 180,
+          "notes": "Maximum values across modes; max amplitude and max slew rate may not be simultaneous.",
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "year_introduced": 2004,
+      "source_urls": [
+        "https://info.atlantisworldwide.com/blog/comparing-philips-ingenia-1.5t-vs-philips-achieva-1.5t-mri",
+        "https://medimagesys.com/catalog/972/"
+      ]
+    }
+  },
+  "Canon Medical Systems": {
+    "Vantage Galan 3T Supreme Edition": {
+      "category": "newest_flagship_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 71,
+      "gradient_configurations": {
+        "Saturn X Gradient": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        },
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        }
+      },
+      "year_introduced": 2024,
+      "notes": "First Canon MRI with all components manufactured in-house, including superconducting magnet.",
+      "source_urls": [
+        "https://us.medical.canon/products/magnetic-resonance/vantage-galan-3t-supreme/"
+      ]
+    },
+    "Vantage Galan 3T": {
+      "category": "current_generation_3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 71,
+      "gradient_configurations": {
+        "Saturn Gradient": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        },
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        }
+      },
+      "year_introduced": 2019,
+      "source_urls": [
+        "https://us.medical.canon/products/magnetic-resonance/vantage-galan-3t-supreme/"
+      ]
+    },
+    "Vantage Orian 1 5T": {
+      "category": "current_generation_premium_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 71,
+      "gradient_configurations": {
+        "Saturn Gradient": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        },
+        "standard": {
+          "max_gradient_strength_mT_per_m": 34,
+          "max_slew_rate_T_per_m_per_s": 155,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        }
+      },
+      "year_introduced": 2018,
+      "notes": "First Canon 1.5T with Saturn gradient technology (migrated from 3T). 71 cm bore, 1.4 m short magnet.",
+      "source_urls": [
+        "https://us.medical.canon/products/magnetic-resonance/vantage-orian-15t/",
+        "https://eu.medical.canon/News/PressRelease/Detail/34862-834"
+      ]
+    },
+    "Vantage Elan 1 5T": {
+      "category": "entry_level_compact_1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 63,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": null,
+          "is_slew_rate_per_axis": null
+        }
+      },
+      "year_introduced": 2014,
+      "notes": "Compact budget system with 23 m2 minimum footprint. Widely installed globally.",
+      "source_urls": [
+        "https://us.medical.canon/products/magnetic-resonance/vantage-elan-15t/",
+        "https://www.tecmedafrica.com/products/vantage-elan-1-5t-mri-system/"
+      ]
+    }
+  },
+  "United Imaging Healthcare": {
+    "uMR Jupiter 5T": {
+      "category": "ultra-high-field whole-body",
+      "B0_field_strength_T": 5.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 120,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "World's first whole-body 5T MRI. 8-channel parallel transmit coil for uniform B1 field. 3.5 MW gradient power amplifier. 3rd-order B0 shimming. Fits in standard 3T-sized room. Weight ~15 tonnes. FDA cleared 2024 (K233673). CE marking pending as of ECR 2023 launch.",
+      "year_introduced": 2023,
+      "FDA_clearance": "2024",
+      "source_urls": [
+        "https://www.auntminnie.com/clinical-news/mri/article/15632935/united-unveils-5t-mri-scanner-at-ecr-2023",
+        "https://global.united-imaging.com/en/product-service/products/mr/umr-jupiter",
+        "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K233673.pdf",
+        "https://axisimagingnews.com/radiology-products/imaging-equipment/mri/fda-clears-united-imagings-5t-mri-system"
+      ]
+    },
+    "uMR Ultra": {
+      "category": "premium clinical and research 3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 100,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Advanced 3T with LIVE imaging capability (dynamic whole-body visualization). Up to 192 independent RF channels. Up to 96-channel coil capability. 3.5 MW gradient power amplifier. uAIFI.LIVE platform. First 70 cm wide-bore MR to achieve 100 mT/m. CE marked. FDA cleared 2025. Debuted RSNA 2024.",
+      "year_introduced": 2024,
+      "FDA_clearance": "2025",
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-ultra",
+        "https://global.united-imaging.com/en/product-service/products/mr/umr-ultra",
+        "https://healthcare-in-europe.com/en/news/united-imaging-umi-panvivo-umr-ultra.html",
+        "https://usa.united-imaging.com/news/press/united-imaging-broadens-imaging-portfolio-and-advances-native-ai-at-rsna-2025"
+      ]
+    },
+    "uMR 790": {
+      "category": "research 3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 100,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Research-focused 3T system. Full-digital GPA with 2.0 MW peak power. US site lists 90 mT/m (simultaneous on each axis); global site lists 100 mT/m. 32/48 RF receive channels. uCS 2.0 platform. ADEPT research platform for data sharing.",
+      "year_introduced": 2021,
+      "source_urls": [
+        "https://global.united-imaging.com/en/product-service/products/mr/umr-790",
+        "https://usa.united-imaging.com/products/magnetic-resonance/umr-790"
+      ]
+    },
+    "uMR Omega": {
+      "category": "ultra-wide-bore clinical 3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 75,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "World's first 75 cm ultra-wide bore 3T. FOV 60x60x50 cm3. Homogeneity 0.08 ppm @ 30 cm DSV. 3.5 MW GPA. Table capacity 310 kg. In-bore starlight lighting. QScan quiet scanning. SuperFlex coils. EasySense contactless respiratory monitoring.",
+      "year_introduced": 2022,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/omega",
+        "https://usa.united-imaging.com/products/magnetic-resonance/omega"
+      ]
+    },
+    "uMR 780": {
+      "category": "clinical 3T",
+      "B0_field_strength_T": 3.0,
+      "bore_diameter_cm": 65,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 42,
+          "max_slew_rate_T_per_m_per_s": 220,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Clinical 3T with ACS (AI-assisted Compressed Sensing) and DeepRecon. 48 RF receive channels. 170 cm short magnet. uCS 2.0 platform with up to 36x acceleration and 0.5 mm isotropic resolution. HealthManagement.org lists 42 mT/m & 220 T/m/s simultaneous on each axis. FDA cleared variant lists 42/200.",
+      "year_introduced": 2019,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-780",
+        "https://healthmanagement.org/products/view/all/umr-780",
+        "https://usa.united-imaging.com/product/umr-780/"
+      ]
+    },
+    "uMR 680": {
+      "category": "premium clinical 1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Wide-bore 1.5T with uAIFI platform (DeepRecon, EasySense, QScan). 45 mT/m & 200 T/m/s simultaneous on each axis. Aims for '3.0T-like' image quality through DL reconstruction. Starlight in-bore lighting. Available as mobile system configuration.",
+      "year_introduced": 2022,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-680",
+        "https://global.united-imaging.com/en/product-service/products/mr/umr-680"
+      ]
+    },
+    "uMR 670": {
+      "category": "mid-range clinical 1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 70,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 160,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        },
+        "high performance": {
+          "max_gradient_strength_mT_per_m": 45,
+          "max_slew_rate_T_per_m_per_s": 200,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Wide-bore 1.5T with uAIFI DeepRecon and EasySense. 24 or 48 RF channels. Internal product comparison shows two gradient tiers: 33/160 and 45/200. QScan quiet scanning.",
+      "year_introduced": 2021,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-670",
+        "https://pdfcoffee.com/umr-introduction-2023-pdf-free.html"
+      ]
+    },
+    "uMR 588": {
+      "category": "clinical 1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 160,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Clinical 1.5T with uCS compressed sensing platform (first 1.5T with CS). 24 RF channels. DeepRecon DL reconstruction. 16x acceleration for dynamic abdomen imaging.",
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-588",
+        "https://pdfcoffee.com/umr-introduction-2023-pdf-free.html"
+      ]
+    },
+    "uMR 580": {
+      "category": "entry-level clinical 1.5T",
+      "B0_field_strength_T": 1.5,
+      "bore_diameter_cm": 60,
+      "gradient_configurations": {
+        "standard": {
+          "max_gradient_strength_mT_per_m": 33,
+          "max_slew_rate_T_per_m_per_s": 125,
+          "is_gradient_strength_per_axis": true,
+          "is_slew_rate_per_axis": true
+        }
+      },
+      "notes": "Entry-level 1.5T. 16 RF channels. Full digital gradient control. 150 cm magnet length. 850 L liquid helium with zero boil-off. Active shielding. Max effective amplitude 57 mT/m, max effective slew rate 216 T/m/s (vector sum). 100% duty cycle.",
+      "year_introduced": 2018,
+      "source_urls": [
+        "https://eu.united-imaging.com/en/product-service/products/mr/umr-580",
+        "https://www.studocu.com/co/document/institucion-universitaria-digital-de-antioquia/administracion-en-seguridad-y-salud-en-el-trabajo/ce-103307-u-mr-580-datasheet/105564988"
+      ]
+    }
+  }
+}

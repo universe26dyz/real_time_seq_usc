@@ -14,6 +14,8 @@ from __future__ import annotations
 import argparse
 import copy
 from dataclasses import dataclass
+from importlib.metadata import version
+import json
 from math import ceil
 from pathlib import Path
 import sys
@@ -298,6 +300,7 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
     global_indices = np.arange(total_arms, dtype=np.int32)
     global_angles_deg = np.mod(global_indices * spiral["ga_angle_deg"], 360.0)
     labels_metadata: list[dict[str, int]] = []
+    maximum_played_axis_gradient_mT_per_m = 0.0
     te_delay = make_delay(te_delay_s) if te_delay_s else None
     tr_delay = make_delay(tr_delay_s) if tr_delay_s else None
 
@@ -331,15 +334,26 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
                 angle=np.deg2rad(global_angles_deg[global_arm_index]),
                 system=system,
             )
+            maximum_played_axis_gradient_mT_per_m = max(
+                maximum_played_axis_gradient_mT_per_m,
+                float(np.max(np.abs(gx.waveform)) / system.gamma * 1e3),
+                float(np.max(np.abs(gy.waveform)) / system.gamma * 1e3),
+            )
 
             seq.add_block(current_rf, slice_select)
             if te_delay is not None:
                 seq.add_block(te_delay)
-            # 每次采集前显式设置本地 SLC/REP/LIN；LIN 仅表示 frame 内臂号。
-            seq.add_block(make_label(config["labels"]["slice_label"], "SET", slc))
-            seq.add_block(make_label(config["labels"]["frame_label"], "SET", rep))
-            seq.add_block(make_label(config["labels"]["arm_in_frame_label"], "SET", lin))
-            seq.add_block(gx, gy, current_adc, gzrr)
+            # 标签与 ADC/readout 同一零时长事件块，避免 60 层时额外 63,000 个 label blocks。
+            # SLC/REP/LIN 的取值和 fixed-slice 时序不变。
+            seq.add_block(
+                make_label(config["labels"]["slice_label"], "SET", slc),
+                make_label(config["labels"]["frame_label"], "SET", rep),
+                make_label(config["labels"]["arm_in_frame_label"], "SET", lin),
+                gx,
+                gy,
+                current_adc,
+                gzrr,
+            )
             if tr_delay is not None:
                 seq.add_block(tr_delay)
 
@@ -383,6 +397,22 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
             "rewinder_base_rotation_deg": rewinder_base_rotation_deg,
             "sequence_signature": signature,
             "full_sampling_interleaves": full_sampling_interleaves,
+            "arms_per_frame": realtime["arms_per_frame"],
+            "frames_per_slice": realtime["frames_per_slice"],
+            "played_arms_per_slice": realtime["trs_per_slice"],
+            "num_slices": geometry["num_slices"],
+            "slice_positions_m": positions_m,
+            "fov_mm": geometry["fov_mm"],
+            "nominal_resolution_mm": geometry["inplane_resolution_mm"],
+            "matrix": geometry["matrix"],
+            "target_te_s": target_te_s,
+            "target_tr_s": target_tr_s,
+            "actual_te_s": actual_te_s,
+            "actual_tr_s": actual_tr_s,
+            "rewinder_requested_time_s": spiral["rewinder_time_s"],
+            "rewinder_solver_search_time_s": rewinder_search_limit_s,
+            "rewinder_actual_duration_s": rewinder_duration_s,
+            "rewinder_retry_reason": rewinder_retry_reason or "",
         },
     )
 
@@ -423,6 +453,13 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
         "actual_slice_dwell_s": actual_tr_s * realtime["trs_per_slice"],
         "actual_total_scan_time_s": actual_tr_s * total_arms,
         "slice_positions_m": positions_m,
+        "matrix": geometry["matrix"],
+        "center": [value / 2.0 for value in geometry["matrix"]],
+        "effective_spacing_mm": [
+            geometry["fov_mm"][index] / geometry["matrix"][index]
+            for index in range(2)
+        ],
+        "maximum_played_axis_gradient_mT_per_m": maximum_played_axis_gradient_mT_per_m,
         "has_physio_trigger": False,
         "has_external_ttl": False,
     }
@@ -439,6 +476,107 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
     )
 
 
+def write_task3_reports(result: GenerationResult, config: dict, output_root: Path) -> None:
+    """Write resolved JSON and concise final reports from this actual run."""
+    output_root = Path(output_root)
+    report_dir = output_root / config["output"]["report_dir"]
+    report_dir.mkdir(parents=True, exist_ok=True)
+    metadata = result.metadata
+    geometry = config["geometry"]
+    scanner = config["scanner_system"]
+    target = config["target_timing"]
+    realtime = config["realtime"]
+    resolved_path = report_dir / "resolved_config.json"
+    resolved = {
+        "project": config["project"],
+        "provenance": config["provenance"],
+        "target_timing": {
+            "te_ms": target["te_ms"], "tr_ms": target["tr_ms"],
+            "frame_time_ms": target["frame_time_ms"],
+            "slice_dwell_time_s": target["slice_dwell_time_s"],
+        },
+        "actual_timing": {
+            "te_ms": result.actual_te_s * 1e3,
+            "tr_ms": result.actual_tr_s * 1e3,
+            "frame_time_ms": metadata["actual_frame_time_s"] * 1e3,
+            "slice_dwell_time_s": metadata["actual_slice_dwell_s"],
+            "total_scan_time_s": metadata["actual_total_scan_time_s"],
+            "timing_adjustment_reason": result.timing_adjustment_reason,
+        },
+        "realtime": {
+            "arms_per_frame": realtime["arms_per_frame"],
+            "frames_per_slice": realtime["frames_per_slice"],
+            "arms_per_slice": realtime["trs_per_slice"],
+            "num_slices": geometry["num_slices"],
+            "total_adc_acquisitions": metadata["total_played_arms"],
+        },
+        "geometry": {
+            "fov_mm": geometry["fov_mm"],
+            "nominal_resolution_mm": geometry["inplane_resolution_mm"],
+            "matrix": metadata["matrix"],
+            "effective_spacing_mm": metadata["effective_spacing_mm"],
+            "center": metadata["center"],
+            "slice_thickness_mm": geometry["slice_thickness_mm"],
+            "slice_shift_mm": geometry["slice_shift_mm"],
+            "slice_positions_m": metadata["slice_positions_m"],
+        },
+        "scanner_system": {
+            "max_grad_mT_per_m": scanner["max_grad_mT_per_m"],
+            "max_slew_T_per_m_per_s": scanner["max_slew_T_per_m_per_s"],
+            "maximum_played_physical_axis_gradient_mT_per_m": metadata["maximum_played_axis_gradient_mT_per_m"],
+        },
+        "rewinder": {
+            "requested_time_s": metadata["rewinder_requested_time_s"],
+            "solver_search_time_s": metadata["rewinder_solver_search_time_s"],
+            "actual_duration_s": metadata["rewinder_actual_duration_s"],
+            "retry_reason": metadata["rewinder_retry_reason"],
+        },
+        "sequence": {
+            "signature": result.signature,
+            "seq_path": str(result.sequence_path.resolve()),
+            "trajectory_path": str(result.trajectory_path.resolve()),
+            "seq_file_size_bytes": result.sequence_path.stat().st_size,
+            "timing_check_passed": result.timing_ok,
+            "full_sampling_interleaves": metadata["full_sampling_interleaves"],
+            "played_arms_per_slice": metadata["played_arms_per_slice"],
+        },
+    }
+    resolved_path.write_text(json.dumps(resolved, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    timing_path = report_dir / "TIMING_REPORT.md"
+    timing_path.write_text(
+        f"# Timing report\n\n"
+        f"Target: TE {target['te_ms']:.2f} ms; TR {target['tr_ms']:.2f} ms; "
+        f"frame {target['frame_time_ms']:.2f} ms; slice dwell about {target['slice_dwell_time_s']:.2f} s.\n\n"
+        f"Actual final run: TE {result.actual_te_s * 1e3:.3f} ms; TR {result.actual_tr_s * 1e3:.3f} ms; "
+        f"frame {metadata['actual_frame_time_s'] * 1e3:.3f} ms; "
+        f"slice dwell {metadata['actual_slice_dwell_s']:.6f} s; "
+        f"60-slice duration {metadata['actual_total_scan_time_s']:.6f} s.\n\n"
+        f"The target is infeasible without removing required UIH RF/ADC dead time, RF and slice-selection timing, "
+        f"spiral readout, M1-nulled gropt rewinder, or raster constraints. {result.timing_adjustment_reason}\n\n"
+        f"`seq.check_timing()` passed: `{result.timing_ok}`.\n",
+        encoding="utf-8",
+    )
+    generation_path = report_dir / "GENERATION_REPORT.md"
+    generation_path.write_text(
+        f"# UIH RTSpiral final generation\n\n"
+        f"- USC RTSpiral: {config['provenance']['primary_sequence_repo']} @ `{config['provenance']['primary_sequence_commit']}`\n"
+        f"- PulseqSystems: {config['provenance']['uih_system_repo']} @ `{config['provenance']['uih_system_commit']}`\n"
+        f"- Python / PyPulseq: {sys.version.split()[0]} / {version('pypulseq')}\n"
+        f"- UIH adaptations: JSON config, UIH timing, fixed-slice 7×50×60 acquisition, SLC/REP/LIN, UIH Definitions, and traceable trajectory metadata.\n"
+        f"- FOV: user-specified 360×320 mm; radial trajectory design FOV 360 mm is an engineering derivation, not a paper parameter.\n"
+        f"- Matrix / Center / Resolution definition: {metadata['matrix']} / {metadata['center']} / {metadata['matrix']}.\n"
+        f"- Actual TE/TR: {result.actual_te_s * 1e3:.3f}/{result.actual_tr_s * 1e3:.3f} ms; frame {metadata['actual_frame_time_s'] * 1e3:.3f} ms; slice dwell {metadata['actual_slice_dwell_s']:.6f} s; total {metadata['actual_total_scan_time_s']:.6f} s.\n"
+        f"- Max physical-axis gradient: {metadata['maximum_played_axis_gradient_mT_per_m']:.6f} mT/m.\n"
+        f"- Rewinder: requested 3 ms; solver bound {metadata['rewinder_solver_search_time_s'] * 1e3:.1f} ms; actual {metadata['rewinder_actual_duration_s'] * 1e3:.3f} ms.\n"
+        f"- Signature: `{result.signature}`; timing check: `{result.timing_ok}`.\n"
+        f"- Sequence: `{result.sequence_path.resolve()}` ({result.sequence_path.stat().st_size} bytes)\n"
+        f"- Trajectory: `{result.trajectory_path.resolve()}`\n\n"
+        f"Next: import the `.seq` into UIH AIDE / Pulseq Virtual Scan, inspect arbitrary gradients and definitions, then validate SAR, PNS, 100° FA/B1, label-to-DHL mapping, and raw-data timestamps.\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate UIH uMR 790 real-time spiral bSSFP")
     parser.add_argument(
@@ -449,6 +587,7 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, default=PROJECT_ROOT)
     args = parser.parse_args()
     result = build_sequence(load_config(str(args.config)), args.output_root)
+    write_task3_reports(result, load_config(str(args.config)), args.output_root)
     print(f"actual TE: {result.actual_te_s * 1e3:.3f} ms")
     print(f"actual TR: {result.actual_tr_s * 1e3:.3f} ms")
     print(f"sequence: {result.sequence_path}")

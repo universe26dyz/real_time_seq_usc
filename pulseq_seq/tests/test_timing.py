@@ -58,10 +58,10 @@ def test_real_sequence_has_labels_before_every_acquisition_and_no_trigger(
         assert getattr(block, "trigger", None) is None
         if block.adc is None:
             continue
-        label_values = {}
-        for label_block in blocks[block_index - 3 : block_index]:
-            for label_event in label_block.label.values():
-                label_values[label_event.label] = int(label_event.value)
+        label_values = {
+            label_event.label: int(label_event.value)
+            for label_event in block.label.values()
+        }
         assert label_values == one_slice_result.metadata["labels"][acquisition_count]
         acquisition_blocks.append(block)
         acquisition_count += 1

@@ -33,6 +33,9 @@ def test_load_config_preserves_uih_protocol_values_and_metadata():
     assert config["spiral"]["trajectory_design_fov_mm"] == max(
         config["geometry"]["fov_mm"]
     )
+    assert config["geometry"]["matrix"] == [240, 213]
+    assert config["uih_definitions"]["write_matrix"] is True
+    assert config["uih_definitions"]["write_resolution"] is True
     assert config["spiral"]["parameter_metadata"]["trajectory_design_fov_mm"] == {
         "unit": "mm",
         "source": "derived from max(geometry.fov_mm)",
@@ -134,7 +137,9 @@ def test_apply_uih_definitions_writes_official_keys_in_si_units():
         "FOV": [0.36, 0.32, 0.006],
         "SliceNumber": 60,
         "SliceThickness": 0.006,
-        "Center": [0.0, 0.0, 0.0],
+        "Matrix": [240, 213],
+        "Resolution": [240, 213],
+        "Center": [120.0, 106.5],
         "SlicePositions": [-0.002, 0.0, 0.002],
         "Name": "UIH_RTSpiral_RealTime",
         "TE": 0.001,

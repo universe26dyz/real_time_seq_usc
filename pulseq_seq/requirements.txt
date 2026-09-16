@@ -1,0 +1,11 @@
+# Validated local environment: Python 3.10, PyPulseq 1.4.2.post1
+pypulseq==1.4.2.post1
+numpy
+scipy
+matplotlib
+seaborn
+pytest
+Cython
+# Installed from the fixed USC source tree:
+# third_party/usc_rtspiral_pypulseq/modules/gropt
+# third_party/usc_rtspiral_pypulseq/modules/libspiral

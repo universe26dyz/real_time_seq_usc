@@ -109,7 +109,7 @@
     "num_slices": 60,
     "typical_num_slices_range": [50, 70],
     "fov_mm": [360.0, 320.0],
-    "matrix": null,
+    "matrix": [240, 213],
     "parameter_metadata": {
       "inplane_resolution_mm": {"unit": "mm", "source": "target acquisition protocol", "note": "Requested in-plane voxel size."},
       "slice_thickness_mm": {"unit": "mm", "source": "target acquisition protocol", "note": "Physical UIH slice thickness, not slab thickness."},
@@ -117,7 +117,7 @@
       "num_slices": {"unit": "slices", "source": "phantom default", "note": "Configurable; protocol usually uses 50-70 slices."},
       "typical_num_slices_range": {"unit": "slices", "source": "target acquisition protocol", "note": "Permitted typical stack range."},
       "fov_mm": {"unit": "mm", "source": "user_specified", "note": "Readout and phase FOV supplied by the user."},
-      "matrix": {"unit": "samples", "source": "derived during trajectory generation", "note": "Unset because 320 mm / 1.5 mm is non-integral."}
+      "matrix": {"unit": "samples", "source": "derived from FOV / nominal resolution", "note": "Display/reconstruction matrix is [240, 213]; 320 / 1.5 is rounded to 213, giving effective PE spacing 320 / 213 = 1.50235 mm."}
     }
   },
   "triggers": {
@@ -142,14 +142,14 @@
     "dimension": 2,
     "write_slice_positions": true,
     "write_center": true,
-    "write_matrix": false,
-    "write_resolution": false,
+    "write_matrix": true,
+    "write_resolution": true,
     "parameter_metadata": {
       "dimension": {"unit": "dimension", "source": "UIH 2D sequence requirement", "note": "Sequence dimension definition."},
       "write_slice_positions": {"unit": "boolean", "source": "UIH 2D sequence requirement", "note": "Write actual slice centres."},
       "write_center": {"unit": "boolean", "source": "UIH 2D sequence requirement", "note": "Write sequence centre."},
-      "write_matrix": {"unit": "boolean", "source": "configuration", "note": "Matrix is deferred while it is unresolved."},
-      "write_resolution": {"unit": "boolean", "source": "configuration", "note": "Resolution definition is deferred with matrix."}
+      "write_matrix": {"unit": "boolean", "source": "UIH 2D protocol definition", "note": "Write the resolved RO/PE encoding matrix."},
+      "write_resolution": {"unit": "boolean", "source": "UIH 2D protocol definition", "note": "Write RO/PE encoding counts in the UIH Resolution definition."}
     }
   },
   "output": {

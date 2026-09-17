@@ -46,24 +46,11 @@ def test_load_config_preserves_uih_protocol_values_and_metadata():
         "source": "user_specified",
         "note": "Readout and phase FOV supplied by the user.",
     }
-    assert config["realtime"]["arms_per_frame"] == 7
-    assert config["realtime"]["frames_per_slice"] == 50
-    assert config["realtime"]["trs_per_slice"] == 350
+    assert "realtime" not in config
     assert config["acquisition"]["arms_per_slice"] == 350
     assert config["reconstruction_defaults"]["arms_per_frame"] == 7
     assert config["triggers"]["physio_trigger_enabled"] is False
     assert config["triggers"]["external_ttl_enabled"] is False
-
-
-def test_load_config_rejects_inconsistent_realtime_arm_count(tmp_path):
-    config_text = CONFIG.read_text(encoding="utf-8").replace(
-        '"trs_per_slice": 350', '"trs_per_slice": 349'
-    )
-    invalid_path = tmp_path / "invalid.json"
-    invalid_path.write_text(config_text, encoding="utf-8")
-
-    with pytest.raises(ValueError, match="trs_per_slice"):
-        load_config(str(invalid_path))
 
 
 def _write_config(tmp_path, config):
@@ -80,7 +67,7 @@ def _write_config(tmp_path, config):
         ("rf", "rf_duration_s", 0),
         ("target_timing", "frame_time_ms", None),
         ("triggers", "external_ttl_enabled", "false"),
-        ("labels", "arm_in_frame_label", ""),
+        ("labels", "line_label", ""),
         ("output", "seq_dir", ""),
     ],
 )

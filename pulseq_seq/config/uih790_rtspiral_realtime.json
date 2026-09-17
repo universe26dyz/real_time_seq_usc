@@ -88,20 +88,6 @@
       "slice_dwell_time_s": {"unit": "s", "source": "target acquisition protocol", "note": "Approximate continuous acquisition duration per slice."}
     }
   },
-  "realtime": {
-    "arms_per_frame": 7,
-    "frames_per_slice": 50,
-    "trs_per_slice": 350,
-    "expected_frame_time_ms_at_target_tr": 39.69,
-    "expected_slice_time_s_at_target_tr": 1.9845,
-    "parameter_metadata": {
-      "arms_per_frame": {"unit": "arms", "source": "target acquisition protocol", "note": "Seven arms form one real-time frame."},
-      "frames_per_slice": {"unit": "frames", "source": "target acquisition protocol", "note": "Fifty consecutive frames per slice."},
-      "trs_per_slice": {"unit": "TRs", "source": "derived", "note": "arms_per_frame multiplied by frames_per_slice."},
-      "expected_frame_time_ms_at_target_tr": {"unit": "ms", "source": "derived", "note": "7 multiplied by target TR."},
-      "expected_slice_time_s_at_target_tr": {"unit": "s", "source": "derived", "note": "350 multiplied by target TR."}
-    }
-  },
   "acquisition": {
     "arms_per_slice": 350,
     "parameter_metadata": {
@@ -142,12 +128,10 @@
   },
   "labels": {
     "slice_label": "SLC",
-    "frame_label": "REP",
-    "arm_in_frame_label": "LIN",
+    "line_label": "LIN",
     "parameter_metadata": {
       "slice_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Slice index label."},
-      "frame_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Real-time frame index label."},
-      "arm_in_frame_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Arm index within frame label."}
+      "line_label": {"unit": "string", "source": "UIH label mapping requirement", "note": "Trajectory/view or local arm index according to GA policy; no temporal-frame label is written."}
     }
   },
   "uih_definitions": {

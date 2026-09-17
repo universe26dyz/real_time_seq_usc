@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pulseq_seq/out_seq/
+pulseq_seq/diagnostic_sequences/
+out_seq/
+diagnostic_sequences/

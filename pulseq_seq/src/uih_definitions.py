@@ -1,13 +1,4 @@
-"""Deterministic UIH labels, geometry, and Pulseq definitions."""
-
-
-def realtime_labels(
-    slice_idx: int, arm_idx_in_slice: int, arms_per_frame: int
-) -> tuple[int, int, int]:
-    """Return the UIH SLC, REP, and LIN labels for one played arm."""
-    if arms_per_frame <= 0:
-        raise ValueError("arms_per_frame must be positive")
-    return slice_idx, arm_idx_in_slice // arms_per_frame, arm_idx_in_slice % arms_per_frame
+"""UIH stack geometry and Pulseq definition helpers."""
 
 
 def slice_positions_m(num_slices: int, shift_mm: float) -> list[float]:

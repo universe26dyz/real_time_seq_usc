@@ -2,8 +2,8 @@
 功能：生成 uMR 790 多层 fixed-slice real-time spiral trueFISP Pulseq 序列。
 来源：USC MREL rtspiral_pypulseq 的 write_rtspiral_svr.py（commit 5d32a138）。
 与 USC 原版相比修改了什么：改用统一 JSON、UIH Opts、无触发、每层 350 个全局 GA 臂、
-SLC/REP/LIN 标签、UIH 2D Definitions，并输出最小 MATLAB 轨迹元数据。
-为什么必须修改：UIH dead time、实时帧组织、重叠层几何和 raw-data 标签与 Siemens 原版不同。
+SLC/LIN 标签、UIH 2D Definitions，并输出最小 MATLAB 轨迹元数据。
+为什么必须修改：UIH dead time、连续分层采集、重叠层几何和 raw-data 标签与 Siemens 原版不同。
 输入：经 config_loader 校验的配置字典，以及输出根目录。
 输出：GenerationResult；同时写出 .seq 和包含基准轨迹/全局角度的 .mat。
 使用命令：conda run --no-capture-output -n Pulseq python src/write_rtspiral_svr_uih.py
@@ -340,7 +340,7 @@ def build_sequence(
     te_delay = make_delay(te_delay_s) if te_delay_s else None
     tr_delay = make_delay(tr_delay_s) if tr_delay_s else None
 
-    # fixed-slice：每层连续 7 arms/frame x 50 frames，再移动到下一层。
+    # fixed-slice：每层连续采集 350 arms；7 arms/frame 仅为下游重建默认分组。
     for slice_index, position_m in enumerate(positions_m):
         # SLC 必须在本层第一条 RF 前写入一次，且不在 arm 内重复。
         seq.add_block(make_label(config["labels"]["slice_label"], "SET", slice_index))
@@ -387,7 +387,7 @@ def build_sequence(
                 seq.add_block(te_delay)
             # LIN 是 view/trajectory index；不写 REP 或 temporal-frame scanner label。
             seq.add_block(
-                make_label(config["labels"]["arm_in_frame_label"], "SET", labels_metadata[-1]["LIN"]),
+                make_label(config["labels"]["line_label"], "SET", labels_metadata[-1]["LIN"]),
                 gx,
                 gy,
                 current_adc,
@@ -618,7 +618,7 @@ def write_task3_reports(result: GenerationResult, config: dict, output_root: Pat
         f"- USC RTSpiral: {config['provenance']['primary_sequence_repo']} @ `{config['provenance']['primary_sequence_commit']}`\n"
         f"- PulseqSystems: {config['provenance']['uih_system_repo']} @ `{config['provenance']['uih_system_commit']}`\n"
         f"- Python / PyPulseq: {sys.version.split()[0]} / {version('pypulseq')}\n"
-        f"- UIH adaptations: JSON config, UIH timing, fixed-slice 7×50×60 acquisition, SLC/REP/LIN, UIH Definitions, and traceable trajectory metadata.\n"
+        f"- UIH adaptations: JSON config, UIH timing, 350 continuous arms per fixed slice, SLC/LIN labels without REP, UIH Definitions, and traceable trajectory metadata.\n"
         f"- FOV: user-specified 360×320 mm; radial trajectory design FOV 360 mm is an engineering derivation, not a paper parameter.\n"
         f"- Matrix / Center / Resolution definition: {metadata['matrix']} / {metadata['center']} / {metadata['matrix']}.\n"
         f"- Actual TE/TR: {result.actual_te_s * 1e3:.3f}/{result.actual_tr_s * 1e3:.3f} ms; frame {metadata['actual_frame_time_s'] * 1e3:.3f} ms; slice dwell {metadata['actual_slice_dwell_s']:.6f} s; total {metadata['actual_total_scan_time_s']:.6f} s.\n"

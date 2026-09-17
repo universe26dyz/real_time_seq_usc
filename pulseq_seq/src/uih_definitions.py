@@ -34,10 +34,14 @@ def apply_uih_definitions(
     fov_mm = geometry["fov_mm"]
     matrix = geometry["matrix"]
     thickness_m = geometry["slice_thickness_mm"] * 1e-3
+    fov_z_m = (
+        (geometry["num_slices"] - 1) * geometry["slice_shift_mm"]
+        + geometry["slice_thickness_mm"]
+    ) * 1e-3
     # Pulseq 的 FOV、厚度、位置和时序 Definition 一律使用 SI 单位。
     definitions = {
         "Dimension": config["uih_definitions"]["dimension"],
-        "FOV": [fov_mm[0] * 1e-3, fov_mm[1] * 1e-3, thickness_m],
+        "FOV": [fov_mm[0] * 1e-3, fov_mm[1] * 1e-3, fov_z_m],
         "SliceNumber": geometry["num_slices"],
         "SliceThickness": thickness_m,
         # UIH 的 Center 是 RO/PE 编码中心索引，并非三维物理坐标。

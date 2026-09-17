@@ -51,7 +51,14 @@ from pypulseq import (
 from pypulseq.Sequence.sequence import Sequence
 
 from config_loader import load_config
-from uih_definitions import apply_uih_definitions, realtime_labels, slice_positions_m
+from uih_definitions import apply_uih_definitions, slice_positions_m
+
+
+GA_POLICIES = {
+    "usc144_lut_global_wrap": {"lut_length": 144, "slice_reset": False},
+    "lut350_slice_reset": {"lut_length": 350, "slice_reset": True},
+    "continuous_global_ga": {"lut_length": None, "slice_reset": False},
+}
 
 
 @dataclass(frozen=True)
@@ -100,9 +107,10 @@ def _require_generator_constraints(config: dict) -> None:
         raise ValueError("physio and external TTL triggers must remain disabled")
     if config["rf"]["flip_angle_deg"] != 100.0:
         raise ValueError("rf.flip_angle_deg must remain 100")
-    realtime = config["realtime"]
-    if (realtime["arms_per_frame"], realtime["frames_per_slice"], realtime["trs_per_slice"]) != (7, 50, 350):
-        raise ValueError("realtime acquisition must remain 7 arms x 50 frames = 350 TRs")
+    if config["acquisition"]["arms_per_slice"] != 350:
+        raise ValueError("acquisition.arms_per_slice must remain 350")
+    if config["reconstruction_defaults"]["arms_per_frame"] != 7:
+        raise ValueError("reconstruction_defaults.arms_per_frame must remain 7")
 
 
 def _ceil_to_raster(duration_s: float, raster_s: float) -> float:
@@ -139,14 +147,22 @@ def _design_usc_rewinder(g_grad: np.ndarray, config: dict, system: Opts):
         return (*result, retry_limit_s, retry_reason)
 
 
-def build_sequence(config: dict, output_root: Path) -> GenerationResult:
+def build_sequence(
+    config: dict,
+    output_root: Path,
+    ga_policy: str = "continuous_global_ga",
+    sequence_filename: str = "uih790_rtspiral_realtime.seq",
+) -> GenerationResult:
     """Build, timing-check, and write the UIH real-time spiral sequence."""
     _require_generator_constraints(config)
     output_root = Path(output_root)
     scanner = config["scanner_system"]
     spiral = config["spiral"]
     geometry = config["geometry"]
-    realtime = config["realtime"]
+    acquisition = config["acquisition"]
+    reconstruction = config["reconstruction_defaults"]
+    if ga_policy not in GA_POLICIES:
+        raise ValueError(f"unknown GA policy: {ga_policy}")
 
     # UIH adaptation: Opts 精确采用手册所需 raster/dead time 与保守梯度限制。
     system = Opts(
@@ -265,6 +281,22 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
         calc_duration(gzrr), rewinder_duration_s
     )
 
+    policy_spec = GA_POLICIES[ga_policy]
+    ga_lut_length = policy_spec["lut_length"]
+    ga_lut_angles_deg = (
+        np.mod(np.arange(ga_lut_length) * spiral["ga_angle_deg"], 360.0)
+        if ga_lut_length is not None
+        else None
+    )
+    ga_gradient_lut = (
+        [
+            rotate(base_gx, base_gy, axis="z", angle=np.deg2rad(angle), system=system)
+            for angle in ga_lut_angles_deg
+        ]
+        if ga_lut_angles_deg is not None
+        else None
+    )
+
     # target 不可达时只增加 raster-compatible delay，不删除 rewinder/M1。
     target_te_s = config["target_timing"]["te_ms"] * 1e-3
     rf_center_from_block_start_s = rf.delay + calc_rf_center(rf)[0]
@@ -296,9 +328,13 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
     positions_m = slice_positions_m(
         geometry["num_slices"], geometry["slice_shift_mm"]
     )
-    total_arms = geometry["num_slices"] * realtime["trs_per_slice"]
+    arms_per_slice = acquisition["arms_per_slice"]
+    total_arms = geometry["num_slices"] * arms_per_slice
     global_indices = np.arange(total_arms, dtype=np.int32)
-    global_angles_deg = np.mod(global_indices * spiral["ga_angle_deg"], 360.0)
+    slice_index_per_acq = np.repeat(np.arange(geometry["num_slices"], dtype=np.int32), arms_per_slice)
+    arm_index_in_slice = np.tile(np.arange(arms_per_slice, dtype=np.int32), geometry["num_slices"])
+    trajectory_index_per_acq = np.empty(total_arms, dtype=np.int32)
+    actual_angles_deg = np.empty(total_arms, dtype=float)
     labels_metadata: list[dict[str, int]] = []
     maximum_played_axis_gradient_mT_per_m = 0.0
     te_delay = make_delay(te_delay_s) if te_delay_s else None
@@ -306,20 +342,33 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
 
     # fixed-slice：每层连续 7 arms/frame x 50 frames，再移动到下一层。
     for slice_index, position_m in enumerate(positions_m):
+        # SLC 必须在本层第一条 RF 前写入一次，且不在 arm 内重复。
+        seq.add_block(make_label(config["labels"]["slice_label"], "SET", slice_index))
         slice_rf = copy.deepcopy(rf)
         slice_rf.freq_offset = gz.amplitude * position_m
         slice_phase_correction = np.mod(
             -2 * np.pi * slice_rf.freq_offset * calc_rf_center(slice_rf)[0],
             2 * np.pi,
         )
-        for arm_index_in_slice in range(realtime["trs_per_slice"]):
+        for local_arm_index in range(arms_per_slice):
             global_arm_index = (
-                slice_index * realtime["trs_per_slice"] + arm_index_in_slice
+                slice_index * arms_per_slice + local_arm_index
             )
-            slc, rep, lin = realtime_labels(
-                slice_index, arm_index_in_slice, realtime["arms_per_frame"]
-            )
-            labels_metadata.append({"SLC": slc, "REP": rep, "LIN": lin})
+            if ga_policy == "usc144_lut_global_wrap":
+                trajectory_index = global_arm_index % ga_lut_length
+            elif ga_policy == "lut350_slice_reset":
+                trajectory_index = local_arm_index
+            else:
+                trajectory_index = global_arm_index
+            if ga_gradient_lut is None:
+                angle_deg = float(np.mod(global_arm_index * spiral["ga_angle_deg"], 360.0))
+                gx, gy = rotate(base_gx, base_gy, axis="z", angle=np.deg2rad(angle_deg), system=system)
+            else:
+                angle_deg = float(ga_lut_angles_deg[trajectory_index])
+                gx, gy = ga_gradient_lut[trajectory_index]
+            trajectory_index_per_acq[global_arm_index] = trajectory_index
+            actual_angles_deg[global_arm_index] = angle_deg
+            labels_metadata.append({"SLC": slice_index, "LIN": trajectory_index if ga_policy != "continuous_global_ga" else local_arm_index})
 
             # trueFISP 相位交替与全局 GA 角均不在换层时重置。
             rf_phase = np.mod(global_arm_index * np.pi, 2 * np.pi)
@@ -327,13 +376,6 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
             current_rf.phase_offset = np.mod(rf_phase + slice_phase_correction, 2 * np.pi)
             current_adc = copy.deepcopy(base_adc)
             current_adc.phase_offset = rf_phase
-            gx, gy = rotate(
-                base_gx,
-                base_gy,
-                axis="z",
-                angle=np.deg2rad(global_angles_deg[global_arm_index]),
-                system=system,
-            )
             maximum_played_axis_gradient_mT_per_m = max(
                 maximum_played_axis_gradient_mT_per_m,
                 float(np.max(np.abs(gx.waveform)) / system.gamma * 1e3),
@@ -343,12 +385,9 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
             seq.add_block(current_rf, slice_select)
             if te_delay is not None:
                 seq.add_block(te_delay)
-            # 标签与 ADC/readout 同一零时长事件块，避免 60 层时额外 63,000 个 label blocks。
-            # SLC/REP/LIN 的取值和 fixed-slice 时序不变。
+            # LIN 是 view/trajectory index；不写 REP 或 temporal-frame scanner label。
             seq.add_block(
-                make_label(config["labels"]["slice_label"], "SET", slc),
-                make_label(config["labels"]["frame_label"], "SET", rep),
-                make_label(config["labels"]["arm_in_frame_label"], "SET", lin),
+                make_label(config["labels"]["arm_in_frame_label"], "SET", labels_metadata[-1]["LIN"]),
                 gx,
                 gy,
                 current_adc,
@@ -380,7 +419,7 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
     trajectory_dir = output_root / config["output"]["trajectory_dir"]
     seq_dir.mkdir(parents=True, exist_ok=True)
     trajectory_dir.mkdir(parents=True, exist_ok=True)
-    sequence_path = seq_dir / "uih790_rtspiral_realtime.seq"
+    sequence_path = seq_dir / sequence_filename
     signature = seq.write(str(sequence_path), create_signature=True, check_timing=True)
     if not signature:
         raise RuntimeError("PyPulseq did not return a sequence signature")
@@ -393,13 +432,21 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
             "base_k_vds_unrotated": base_k,
             "base_gradient_mT_per_m": complete_gradient,
             "global_arm_index": global_indices,
-            "global_arm_angle_deg": global_angles_deg,
+            "global_arm_angle_deg": actual_angles_deg,
+            "ga_policy": ga_policy,
+            "ga_angle_deg": spiral["ga_angle_deg"],
+            "ga_lut_length": ga_lut_length if ga_lut_length is not None else -1,
+            "slice_reset": policy_spec["slice_reset"],
+            "slice_index_per_acq": slice_index_per_acq,
+            "arm_index_in_slice": arm_index_in_slice,
+            "global_acquisition_index": global_indices,
+            "trajectory_index_per_acq": trajectory_index_per_acq,
             "rewinder_base_rotation_deg": rewinder_base_rotation_deg,
             "sequence_signature": signature,
             "full_sampling_interleaves": full_sampling_interleaves,
-            "arms_per_frame": realtime["arms_per_frame"],
-            "frames_per_slice": realtime["frames_per_slice"],
-            "played_arms_per_slice": realtime["trs_per_slice"],
+            "arms_per_frame": reconstruction["arms_per_frame"],
+            "frames_per_slice": arms_per_slice // reconstruction["arms_per_frame"],
+            "played_arms_per_slice": arms_per_slice,
             "num_slices": geometry["num_slices"],
             "slice_positions_m": positions_m,
             "fov_mm": geometry["fov_mm"],
@@ -419,8 +466,16 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
     metadata = {
         "labels": labels_metadata,
         "global_arm_indices": global_indices.tolist(),
-        "global_arm_angles_deg": global_angles_deg.tolist(),
-        "played_arms_per_slice": realtime["trs_per_slice"],
+        "global_arm_angles_deg": actual_angles_deg.tolist(),
+        "slice_index_per_acq": slice_index_per_acq.tolist(),
+        "arm_index_in_slice": arm_index_in_slice.tolist(),
+        "trajectory_index_per_acq": trajectory_index_per_acq.tolist(),
+        "ga_policy": ga_policy,
+        "ga_lut_length": ga_lut_length,
+        "slice_reset": policy_spec["slice_reset"],
+        "played_arms_per_slice": arms_per_slice,
+        "default_reconstruction_arms_per_frame": reconstruction["arms_per_frame"],
+        "default_reconstruction_frames_per_slice": arms_per_slice // reconstruction["arms_per_frame"],
         "total_played_arms": total_arms,
         "full_sampling_interleaves": int(full_sampling_interleaves),
         "rotation_safe_design_max_grad_mT_per_m": rotation_safe_max_grad_mT_per_m,
@@ -449,8 +504,8 @@ def build_sequence(config: dict, output_root: Path) -> GenerationResult:
         "target_tr_s": target_tr_s,
         "minimum_te_s": minimum_te_s,
         "minimum_tr_s": minimum_tr_s,
-        "actual_frame_time_s": actual_tr_s * realtime["arms_per_frame"],
-        "actual_slice_dwell_s": actual_tr_s * realtime["trs_per_slice"],
+        "actual_frame_time_s": actual_tr_s * reconstruction["arms_per_frame"],
+        "actual_slice_dwell_s": actual_tr_s * arms_per_slice,
         "actual_total_scan_time_s": actual_tr_s * total_arms,
         "slice_positions_m": positions_m,
         "matrix": geometry["matrix"],
@@ -485,7 +540,7 @@ def write_task3_reports(result: GenerationResult, config: dict, output_root: Pat
     geometry = config["geometry"]
     scanner = config["scanner_system"]
     target = config["target_timing"]
-    realtime = config["realtime"]
+    reconstruction = config["reconstruction_defaults"]
     resolved_path = report_dir / "resolved_config.json"
     resolved = {
         "project": config["project"],
@@ -503,10 +558,10 @@ def write_task3_reports(result: GenerationResult, config: dict, output_root: Pat
             "total_scan_time_s": metadata["actual_total_scan_time_s"],
             "timing_adjustment_reason": result.timing_adjustment_reason,
         },
-        "realtime": {
-            "arms_per_frame": realtime["arms_per_frame"],
-            "frames_per_slice": realtime["frames_per_slice"],
-            "arms_per_slice": realtime["trs_per_slice"],
+        "reconstruction_defaults": {
+            "arms_per_frame": reconstruction["arms_per_frame"],
+            "frames_per_slice": metadata["default_reconstruction_frames_per_slice"],
+            "arms_per_slice": metadata["played_arms_per_slice"],
             "num_slices": geometry["num_slices"],
             "total_adc_acquisitions": metadata["total_played_arms"],
         },

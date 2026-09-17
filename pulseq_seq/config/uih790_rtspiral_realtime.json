@@ -102,6 +102,18 @@
       "expected_slice_time_s_at_target_tr": {"unit": "s", "source": "derived", "note": "350 multiplied by target TR."}
     }
   },
+  "acquisition": {
+    "arms_per_slice": 350,
+    "parameter_metadata": {
+      "arms_per_slice": {"unit": "arms", "source": "target acquisition protocol", "note": "Scanner acquisition length per fixed slice; independent of reconstruction grouping."}
+    }
+  },
+  "reconstruction_defaults": {
+    "arms_per_frame": 7,
+    "parameter_metadata": {
+      "arms_per_frame": {"unit": "arms", "source": "downstream reconstruction default", "note": "Metadata-only temporal grouping; never written as a scanner frame label."}
+    }
+  },
   "geometry": {
     "inplane_resolution_mm": [1.5, 1.5],
     "slice_thickness_mm": 6.0,

@@ -49,6 +49,8 @@ def test_load_config_preserves_uih_protocol_values_and_metadata():
     assert config["realtime"]["arms_per_frame"] == 7
     assert config["realtime"]["frames_per_slice"] == 50
     assert config["realtime"]["trs_per_slice"] == 350
+    assert config["acquisition"]["arms_per_slice"] == 350
+    assert config["reconstruction_defaults"]["arms_per_frame"] == 7
     assert config["triggers"]["physio_trigger_enabled"] is False
     assert config["triggers"]["external_ttl_enabled"] is False
 
@@ -134,7 +136,7 @@ def test_apply_uih_definitions_writes_official_keys_in_si_units():
 
     assert sequence.values == {
         "Dimension": 2,
-        "FOV": [0.36, 0.32, 0.006],
+        "FOV": [0.36, 0.32, 0.124],
         "SliceNumber": 60,
         "SliceThickness": 0.006,
         "Matrix": [240, 213],

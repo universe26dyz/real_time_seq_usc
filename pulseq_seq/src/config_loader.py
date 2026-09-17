@@ -7,7 +7,7 @@ from pathlib import Path
 
 _REQUIRED_SECTIONS = (
     "project", "provenance", "scanner_system", "spiral", "rf", "target_timing",
-    "realtime", "geometry", "triggers", "labels", "uih_definitions", "output",
+    "realtime", "acquisition", "reconstruction_defaults", "geometry", "triggers", "labels", "uih_definitions", "output",
 )
 _METADATA_FIELDS = ("unit", "source", "note")
 _METADATA_PARAMETERS = {
@@ -17,6 +17,8 @@ _METADATA_PARAMETERS = {
     "rf": ("flip_angle_deg", "rf_duration_s", "time_bandwidth_product", "fa_schedule_enabled"),
     "target_timing": ("te_ms", "tr_ms", "frame_time_ms", "slice_dwell_time_s"),
     "realtime": ("arms_per_frame", "frames_per_slice", "trs_per_slice", "expected_frame_time_ms_at_target_tr", "expected_slice_time_s_at_target_tr"),
+    "acquisition": ("arms_per_slice",),
+    "reconstruction_defaults": ("arms_per_frame",),
     "geometry": ("inplane_resolution_mm", "slice_thickness_mm", "slice_shift_mm", "num_slices", "typical_num_slices_range", "fov_mm", "matrix"),
     "triggers": ("physio_trigger_enabled", "external_ttl_enabled"),
     "labels": ("slice_label", "frame_label", "arm_in_frame_label"),
@@ -49,6 +51,8 @@ def _validate_config(config: dict) -> None:
     _validate_rf(config["rf"])
     _validate_timing(config["target_timing"])
     _validate_realtime(config["realtime"])
+    _validate_acquisition(config["acquisition"])
+    _validate_reconstruction_defaults(config["reconstruction_defaults"])
     _validate_geometry(config["geometry"])
     _validate_triggers(config["triggers"])
     _validate_labels(config["labels"])
@@ -121,6 +125,14 @@ def _validate_realtime(section: dict) -> None:
         _require_positive_int(section, key, "realtime")
     for key in ("expected_frame_time_ms_at_target_tr", "expected_slice_time_s_at_target_tr"):
         _require_positive_number(section, key, "realtime")
+
+
+def _validate_acquisition(section: dict) -> None:
+    _require_positive_int(section, "arms_per_slice", "acquisition")
+
+
+def _validate_reconstruction_defaults(section: dict) -> None:
+    _require_positive_int(section, "arms_per_frame", "reconstruction_defaults")
 
 
 def _validate_geometry(section: dict) -> None:

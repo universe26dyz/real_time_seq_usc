@@ -33,39 +33,52 @@ def test_generated_sequence_passes_pypulseq_timing(one_slice_result):
     assert one_slice_result.timing_ok is True
 
 
-def test_one_slice_preserves_350_arms_and_global_ga_metadata(one_slice_result):
+def test_one_slice_preserves_350_arms_and_reconstruction_only_frame_metadata(one_slice_result):
     metadata = one_slice_result.metadata
 
     assert metadata["played_arms_per_slice"] == 350
     assert metadata["total_played_arms"] == 350
-    assert metadata["labels"][0] == {"SLC": 0, "REP": 0, "LIN": 0}
-    assert metadata["labels"][6] == {"SLC": 0, "REP": 0, "LIN": 6}
-    assert metadata["labels"][7] == {"SLC": 0, "REP": 1, "LIN": 0}
-    assert metadata["labels"][349] == {"SLC": 0, "REP": 49, "LIN": 6}
+    assert metadata["labels"][0] == {"SLC": 0, "LIN": 0}
+    assert metadata["labels"][6] == {"SLC": 0, "LIN": 6}
+    assert metadata["labels"][7] == {"SLC": 0, "LIN": 7}
+    assert metadata["labels"][349] == {"SLC": 0, "LIN": 349}
+    assert metadata["default_reconstruction_arms_per_frame"] == 7
+    assert metadata["default_reconstruction_frames_per_slice"] == 50
     assert metadata["global_arm_indices"] == list(range(350))
     assert metadata["global_arm_angles_deg"][1] == pytest.approx(222.4969)
 
 
-def test_real_sequence_has_labels_before_every_acquisition_and_no_trigger(
+def test_real_sequence_sets_slc_once_before_rf_and_writes_no_rep_label(
     one_slice_result,
 ):
     sequence = one_slice_result.sequence
     blocks = [sequence.get_block(block_id) for block_id in sequence.block_events]
     acquisition_count = 0
     acquisition_blocks = []
+    active_slice = None
+    slc_events = []
 
     for block_index, block in enumerate(blocks):
         assert getattr(block, "trigger", None) is None
-        if block.adc is None:
-            continue
         label_values = {
             label_event.label: int(label_event.value)
-            for label_event in block.label.values()
+            for label_event in (getattr(block, "label", None) or {}).values()
         }
-        assert label_values == one_slice_result.metadata["labels"][acquisition_count]
+        assert "REP" not in label_values
+        if "SLC" in label_values:
+            active_slice = label_values["SLC"]
+            slc_events.append((block_index, active_slice))
+            assert block.rf is None
+            continue
+        if block.rf is not None:
+            assert active_slice == 0
+        if block.adc is None:
+            continue
+        assert label_values == {"LIN": acquisition_count}
         acquisition_blocks.append(block)
         acquisition_count += 1
 
+    assert slc_events == [(0, 0)]
     assert acquisition_count == 350
     assert acquisition_blocks[0].gx.type == "grad"
     assert [block.adc.phase_offset for block in acquisition_blocks[:3]] == pytest.approx(

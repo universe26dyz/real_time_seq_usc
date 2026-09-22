@@ -4,3 +4,4 @@ diagnostic_sequences/
 seq_recon/check_seq/
 seq_recon/check_h5/results/
 seq_recon/check_h5/preflight_T13_5/
+seq_recon/baseline_T13_5_slice0/

@@ -1,3 +1,6 @@
 pulseq_seq/out_seq/
 pulseq_seq/diagnostic/
 diagnostic_sequences/
+seq_recon/check_seq/
+seq_recon/check_h5/results/
+seq_recon/check_h5/preflight_T13_5/

@@ -4,7 +4,7 @@ This procedure is for the GPU server only. Step 2B-1 must stop after environment
 
 ## 1. Environment setup
 
-Keep BART outside the repository and use the USC Dockerfile target: BART `v0.7.00`, tag commit `d1b0e576c3f759089915565d5bf57832acf7b03e`. The source Makefile defaults to `CUDA=0`; its supported CUDA build is `make CUDA=1 CUDA_BASE=<CUDA prefix>`. Before building, confirm that `nvcc`, its matching CUDA libraries, FFTW, LAPACKE, PNG, OpenBLAS, and a C/C++ compiler are already available. Do not use `sudo` or alter this repository.
+Keep BART outside the repository and use the project compatibility pin BART `v0.9.00`, tag commit `672a840ff88117e09dc9803e0d9c8c5a7f1c42a9`. This supersedes the old USC Dockerfile's v0.7.00 only because the pinned current USC TFD source requires `nufft -x`; it is a source-level CLI compatibility decision, not an attribution to USC authors. The v0.9.00 Makefile defaults to `CUDA=0`; its supported CUDA build is `make CUDA=1 CUDA_BASE=<CUDA prefix>`. Before building, confirm that `nvcc`, its matching CUDA libraries, FFTW, LAPACKE, PNG, OpenBLAS, and a C/C++ compiler are already available. Do not use `sudo` or alter this repository.
 
 ```bash
 conda activate Pulseq_gpu
@@ -17,20 +17,20 @@ PY
 nvcc --version
 CUDA_PREFIX="$(dirname "$(dirname "$(command -v nvcc)")")"
 mkdir -p "$HOME/software"
-git clone --branch v0.7.00 --depth 1 https://github.com/mrirecon/bart.git "$HOME/software/bart-v0.7.00"
-git -C "$HOME/software/bart-v0.7.00" rev-parse HEAD  # expect d1b0e576c3f759089915565d5bf57832acf7b03e
-make -C "$HOME/software/bart-v0.7.00" CUDA=1 CUDA_BASE="$CUDA_PREFIX" -j"$(nproc)"
+git clone --branch v0.9.00 --depth 1 https://github.com/mrirecon/bart.git "$HOME/software/bart-v0.9.00"
+git -C "$HOME/software/bart-v0.9.00" rev-parse HEAD  # expect 672a840ff88117e09dc9803e0d9c8c5a7f1c42a9
+make -C "$HOME/software/bart-v0.9.00" CUDA=1 CUDA_BASE="$CUDA_PREFIX" -j"$(nproc)"
 ```
 
 If the import probe reports a missing package, install only that package into `Pulseq_gpu`; do not recreate the environment. Do not use `make install`: the user-owned source directory itself is the BART toolbox.
 
 ## 2. Environment validation
 
-Set both BART variables. `BART_TOOLBOX_PATH` is this project’s configuration name; BART v0.7.00 `python/bart.py` additionally requires `TOOLBOX_PATH` for `bart.bart(...)`.
+Set `BART_TOOLBOX_PATH`, which BART v0.9.00 `python/bart.py` recognizes directly. Exporting `TOOLBOX_PATH` as well preserves its supported legacy fallback.
 
 ```bash
 conda activate Pulseq_gpu
-export BART_TOOLBOX_PATH="$HOME/software/bart-v0.7.00"
+export BART_TOOLBOX_PATH="$HOME/software/bart-v0.9.00"
 export TOOLBOX_PATH="$BART_TOOLBOX_PATH"
 export PATH="$BART_TOOLBOX_PATH:$PATH"
 export PYTHONPATH="$BART_TOOLBOX_PATH/python:${PYTHONPATH:-}"
@@ -43,15 +43,15 @@ python seq_recon/usc_tfd/check_bart_environment.py \
   --out seq_recon/usc_tfd/outputs/step2b_environment_report.json
 ```
 
-The smoke test uses synthetic arrays only: BART Python NumPy round-trip plus `nufft -g -a -d 8:8:1`. It never reads T13 data. The environment report records host, Python/conda details, BART executable/version/Python API, GPU/driver, CUDA compiler, required commands, package versions, and smoke result.
+The smoke test uses synthetic arrays only: BART Python NumPy round-trip plus `nufft -g -x 8:8:1 -a`. It never reads T13 data. The environment report records host, Python/conda details, BART executable/version/Python API, GPU/driver, CUDA compiler, required commands/options, package versions, and smoke result.
 
-### Compatibility gate — currently blocking Step 2B-2
+### Compatibility gate
 
-The formal pinned USC scale command is `nufft -g -x <Nx>:<Ny>:1 -a`. Official BART v0.7.00 source exposes `nufft -d x:y:z`, not `-x`; the new checker tests this exact option and must remain `FAIL` if `-x` is absent. Do **not** silently replace the formal USC `-x` with `-d` or change BART versions. Capture the server’s `bart nufft -h` output and resolve the source/version discrepancy before real reconstruction.
+The formal pinned USC scale command is `nufft -g -x <Nx>:<Ny>:1 -a`. BART v0.9.00 source exposes `-x x:y:z` (with legacy `-d` deprecated), matching the formal command. The checker requires exact v0.9.00 identity and audits `nufft -g/-x/-a`, all required `nlinv` options, and all required `pics` options including `-R`; do **not** silently accept another BART release or translate USC `-x` to `-d`.
 
 ## 3. Dry-run
 
-Only after the compatibility gate is resolved, run the no-BART dry-run against the transferred Step-1 package:
+Only after the v0.9.00 compatibility gate and synthetic smoke test pass, run the no-BART dry-run against the transferred Step-1 package:
 
 ```bash
 python seq_recon/usc_tfd/reconstruct_t13_slice0_tfd_bart.py \

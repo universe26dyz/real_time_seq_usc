@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Step 2B-1 formal compatibility target: BART v0.9.00.
+
 : "${BART_TOOLBOX_PATH:?Set BART_TOOLBOX_PATH to the BART installation on the GPU server.}"
 : "${PULSEQ_GPU_PYTHON:=python}"
 

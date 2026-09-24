@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only BART v0.7.00 and GPU readiness report for Step 2B-1."""
+"""Read-only BART v0.9.00 and GPU readiness report for Step 2B-1."""
 
 from __future__ import annotations
 
@@ -14,6 +14,14 @@ import shutil
 import subprocess
 import sys
 from typing import Any
+
+
+EXPECTED_BART_VERSION = "v0.9.00"
+REQUIRED_OPTIONS = {
+    "nufft": ("-g", "-x", "-a"),
+    "nlinv": ("-a", "-b", "-S", "-d", "-i", "-x", "-t"),
+    "pics": ("-g", "-m", "-w", "-e", "-S", "-R", "-d", "-i", "-t"),
+}
 
 
 def _result(ok: bool, detail: str) -> dict[str, str]:
@@ -51,6 +59,16 @@ def _solver_commands(executable: str | None) -> dict[str, dict[str, str]]:
     return result
 
 
+def _option_capabilities(commands: dict[str, dict[str, str]]) -> dict[str, dict[str, dict[str, str]]]:
+    return {
+        command: {
+            option: _result(option in commands[command]["detail"], f"{command} {option}")
+            for option in options
+        }
+        for command, options in REQUIRED_OPTIONS.items()
+    }
+
+
 def _smoke_result(path: Path | None) -> dict[str, str]:
     if path is None:
         return _result(False, "not verified; run smoke_test_bart_gpu.py on the GPU server")
@@ -68,12 +86,13 @@ def inspect_environment(
 ) -> dict[str, Any]:
     configured = bart_toolbox_path or (Path(os.environ["BART_TOOLBOX_PATH"]) if os.environ.get("BART_TOOLBOX_PATH") else None)
     report: dict[str, Any] = {
+        "expected_bart_version": EXPECTED_BART_VERSION,
         "observed_at_utc": datetime.now(timezone.utc).isoformat(),
         "hostname": platform.node(),
         "python": {"executable": sys.executable, "version": sys.version.split()[0]},
         "conda_environment": _result(os.environ.get("CONDA_DEFAULT_ENV") == expected_conda_env, os.environ.get("CONDA_DEFAULT_ENV", "unset")),
         "BART_TOOLBOX_PATH": _result(configured is not None and configured.is_dir(), str(configured) if configured else "unset"),
-        "TOOLBOX_PATH": _result(os.environ.get("TOOLBOX_PATH") == str(configured) if configured else False, os.environ.get("TOOLBOX_PATH", "unset")),
+        "TOOLBOX_PATH_legacy": _result(True, os.environ.get("TOOLBOX_PATH", "unset (optional legacy fallback)")),
         "CUDA_VISIBLE_DEVICES": _result(True, os.environ.get("CUDA_VISIBLE_DEVICES", "unset (CUDA default visibility)")),
     }
     executable = shutil.which("bart")
@@ -82,6 +101,10 @@ def inspect_environment(
         executable = str(candidate) if candidate.is_file() and os.access(candidate, os.X_OK) else None
     report["bart_executable"] = _result(executable is not None, executable or "not found")
     report["bart_version"] = _bart_version(executable)
+    report["bart_version_identity"] = _result(
+        report["bart_version"]["status"] == "PASS" and EXPECTED_BART_VERSION in report["bart_version"]["detail"],
+        f"expected {EXPECTED_BART_VERSION}; observed {report['bart_version']['detail']}",
+    )
 
     python_dir = configured / "python" if configured is not None else None
     if python_dir is not None and python_dir.is_dir():
@@ -98,7 +121,7 @@ def inspect_environment(
     gpu_code, gpu_detail = _run(["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"])
     report["gpu_visibility"] = _result(gpu_code == 0, gpu_detail or "nvidia-smi unavailable")
     cuda_code, cuda_detail = _run(["nvcc", "--version"])
-    report["cuda_compiler"] = _result(cuda_code == 0, cuda_detail or "nvcc unavailable")
+    report["cuda_compiler"] = _result(cuda_code == 0, cuda_detail or "nvcc unavailable (not required for an already-built BART)")
     packages: dict[str, dict[str, str]] = {}
     for name in ("numpy", "scipy", "ismrmrd", "tomli"):
         try:
@@ -109,16 +132,14 @@ def inspect_environment(
     report["python_packages"] = packages
     commands = _solver_commands(executable)
     report["solver_commands"] = commands
-
-    # The pinned USC scale estimator requires -x. Official BART v0.7.00's
-    # nufft help/source uses -d instead, so never silently substitute it.
-    nufft_help = commands["nufft"]["detail"]
-    report["usc_nufft_x_compatibility"] = _result("-x" in nufft_help, "formal USC command requires nufft -g -x <Nx>:<Ny>:1 -a")
+    capabilities = _option_capabilities(commands)
+    report["required_cli_capabilities"] = capabilities
     report["bart_gpu_smoke_test"] = _smoke_result(gpu_smoke_report)
 
-    required = ("conda_environment", "BART_TOOLBOX_PATH", "TOOLBOX_PATH", "bart_executable", "bart_version", "bart_python_module", "bart_python_api", "gpu_visibility", "cuda_compiler", "usc_nufft_x_compatibility", "bart_gpu_smoke_test")
+    required = ("conda_environment", "BART_TOOLBOX_PATH", "bart_executable", "bart_version", "bart_version_identity", "bart_python_module", "bart_python_api", "gpu_visibility", "bart_gpu_smoke_test")
     ready = all(report[key]["status"] == "PASS" for key in required)
     ready = ready and all(item["status"] == "PASS" for item in packages.values()) and all(item["status"] == "PASS" for item in commands.values())
+    ready = ready and all(item["status"] == "PASS" for command in capabilities.values() for item in command.values())
     report["overall"] = "PASS" if ready else "FAIL"
     return report
 

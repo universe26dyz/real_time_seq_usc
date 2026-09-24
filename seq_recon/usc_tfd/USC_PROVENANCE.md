@@ -5,6 +5,12 @@ Pinned reference commit: `faaf0f3e44bf8f2557ac4d7da90a62a5451d7b96`
 Primary source: `rtspiral_bart_tvrecon.py`
 Supporting source inspected: `reconutils.py`
 
+## BART compatibility pin
+
+The pinned USC Dockerfile builds BART `v0.7.00`, but it is stale relative to the pinned current `rtspiral_bart_tvrecon.py`: the latter uses `nufft -g -x <Nx>:<Ny>:1 -a` for scale estimation. Official BART v0.7.00 and v0.8.00 expose the corresponding image-dimension option as `-d`; official BART v0.9.00 exposes `-x` and retains `-d` only as deprecated compatibility syntax.
+
+This project therefore pins BART `v0.9.00` (tag commit `672a840ff88117e09dc9803e0d9c8c5a7f1c42a9`) for the first formal experiment. This is a project compatibility pin derived from source-level CLI matching; it is not a claim that USC authors explicitly selected v0.9.00. The audit also verified that v0.9.00 supports the formal `nlinv` options, the `pics` options and generalized `-R T:A:B:C` syntax, and the `import bart; bart.bart(nargout, command, ...)` API with `BART_TOOLBOX_PATH` and legacy `TOOLBOX_PATH` support.
+
 ## USC blocks ported in Step 2A
 
 `bart_tfd.py` is an offline port of these blocks in `rtspiral_bart_tvrecon.py`:

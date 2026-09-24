@@ -96,3 +96,13 @@ def test_environment_checker_uses_nlinv_parser_probe_for_hidden_a_b(monkeypatch)
     result = environment._nlinv_hidden_option_capabilities("/fake/bart")
     assert result["-a"]["status"] == "PASS"
     assert result["-b"]["status"] == "PASS"
+
+
+def test_qc_plotting_writes_expected_pngs(tmp_path):
+    sens_map = np.ones((8, 8, 1, 2), dtype=np.complex64)
+    display_magnitude = np.ones((5, 6, 50), dtype=np.float32)
+
+    runner._save_qc_images(tmp_path, sens_map, display_magnitude)
+
+    assert (tmp_path / "sens_map_magnitude.png").is_file()
+    assert (tmp_path / "tfd_selected_frames.png").is_file()

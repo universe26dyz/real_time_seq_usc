@@ -74,7 +74,8 @@ def _save_qc_images(output: Path, sens_map: np.ndarray, display_magnitude: np.nd
         sens_magnitude = np.max(sens_magnitude, axis=tuple(range(2, sens_magnitude.ndim)))
     figure, axis = plt.subplots(figsize=(5, 5))
     axis.imshow(sens_magnitude.T, cmap="gray", origin="lower")
-    axis.set(title="Sensitivity-map magnitude QC", axis="off")
+    axis.set_title("Sensitivity-map magnitude QC")
+    axis.axis("off")
     figure.savefig(output / "sens_map_magnitude.png", dpi=160, bbox_inches="tight")
     plt.close(figure)
 
@@ -84,7 +85,8 @@ def _save_qc_images(output: Path, sens_map: np.ndarray, display_magnitude: np.nd
     display_max = float(np.max(display_magnitude))
     for axis, frame in zip(axes, frame_indices):
         axis.imshow(display_magnitude[:, :, frame], cmap="gray", origin="lower", vmin=0, vmax=display_max)
-        axis.set(title=f"frame {frame}", axis="off")
+        axis.set_title(f"frame {frame}")
+        axis.axis("off")
     figure.suptitle("USC display magnitude QC (shared visualization scale)")
     figure.savefig(output / "tfd_selected_frames.png", dpi=160, bbox_inches="tight")
     plt.close(figure)

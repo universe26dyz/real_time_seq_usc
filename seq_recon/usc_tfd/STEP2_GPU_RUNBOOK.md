@@ -1,21 +1,37 @@
-# Step 2 GPU handoff runbook (do not execute during Step 1)
+# Step 2 GPU handoff runbook
 
-Step 1 created a CPU-validated input package; it did not install BART or run a reconstruction. On the GPU server, use the `Pulseq_gpu` environment and verify these prerequisites before adding or invoking the USC BART solver:
+Step 2A added only the offline BART port and CPU dry-run. It did not install BART locally and did not invoke `nlinv` or `pics`.
+
+On the GPU server, first create/activate `Pulseq_gpu` with Python `numpy`, `scipy`, `ismrmrd`, and `tomli`; install a CUDA-capable BART build separately, then set its location without adding a machine-specific path to source:
 
 ```bash
 conda activate Pulseq_gpu
-command -v bart
-nvidia-smi
-python -c "import ismrmrd, numpy, scipy; print('Python input dependencies available')"
+export BART_TOOLBOX_PATH=/path/to/bart
+export CUDA_VISIBLE_DEVICES=0
+cd /path/to/real_time_seq_usc
+python seq_recon/usc_tfd/check_bart_environment.py --bart-toolbox-path "$BART_TOOLBOX_PATH"
 ```
 
-Use the generated `t13_slice0_usc_tfd_input.npz` only after checking that its summary states:
+The report must be `overall: PASS`: it checks `bart`, BART's Python module, version when available, `nvidia-smi -L`, `CUDA_VISIBLE_DEVICES`, and required Python packages without changing the environment.
 
-- k-space: `[50, 7, 2, 1250]` (`frame, arm, coil, sample`);
-- BART trajectory: `[50, 7, 1250, 2]`, convention `[kx, -ky]`, normalized by its recorded measured `kmax` and scaled to 360/2;
-- `pair_mean` is an explicit compatibility selection, not a proven physical oversampling interpretation;
-- H5/MAT slice, LIN, local-arm, and REP checks are all true.
+Then run the same no-BART dry-run against the transferred Step-1 package:
 
-The planned USC reference is `rtspiral_bart_tvrecon.py` at commit `faaf0f3e44bf8f2557ac4d7da90a62a5451d7b96`: first obtain coil maps with BART `nlinv`, then perform BART `pics` with the configured temporal finite difference term (`reg_lambda_temporal=0.0002`, no spatial TV, 120 iterations, one chunk). Preserve the USC BART regularization scaling; do not reinterpret lambda. Work in the 360-square space and only then create the documented central `[y, x] = [213, 240]` crop.
+```bash
+python seq_recon/usc_tfd/reconstruct_t13_slice0_tfd_bart.py \
+  --prepared-npz /path/to/t13_slice0_usc_tfd_input.npz \
+  --input-summary /path/to/input_summary.json \
+  --config seq_recon/usc_tfd/configs/t13_5_slice0.toml \
+  --out /path/to/t13_5_slice0_step2a_dry_run \
+  --bart-toolbox-path "$BART_TOOLBOX_PATH" --gpu-device 0 --dry-run
+```
 
-This runbook intentionally contains no executable BART command: implementing or running the optimizer is Step 2 and is outside the validated CPU-only Step 1 boundary.
+Or use the wrapper (it always runs the environment check and the dry-run):
+
+```bash
+seq_recon/usc_tfd/scripts/run_t13_5_slice0_gpu.sh \
+  /path/to/t13_slice0_usc_tfd_input.npz /path/to/input_summary.json /path/to/t13_5_slice0_step2a_dry_run
+```
+
+Inspect `tfd_dry_run_plan.json`: the expected inputs are k-space `[50,7,2,1250]`, dynamic BART k-space `[1,1250,7,2,1,1,1,1,1,1,50]`, dynamic trajectory `[3,1250,7,1,1,1,1,1,1,1,50]`, `ksp_all [1,1250,350,2]`, and `traj_all [3,1250,350]`. The first future TFD solve remains native `360 x 360`, uses no DCF/GIRF/B0/spatial TV, and records raw complex output before any display transform or centered `[213,240]` crop.
+
+Only after the environment and dry-run are accepted should Step 2B explicitly enable actual BART execution. Its planned commands are USC `nlinv -a 32 -b 16 -S -d4 -i13 -x 32:32:1 -t`, followed by TFD-only `pics` with configured temporal λ `0.0002` and effective BART λ `0.01` (`0.0002 * 50`). This Step 2A runner intentionally rejects any invocation without `--dry-run`.

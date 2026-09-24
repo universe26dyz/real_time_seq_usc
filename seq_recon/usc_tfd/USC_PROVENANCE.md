@@ -34,3 +34,7 @@ This project therefore pins BART `v0.9.00` (tag commit `672a840ff88117e09dc9803e
 - The native centered crop is `[x,y] [360,360] -> [240,213]` (x `60:300`, y `73:286`); the separate USC display transform produces `[y,x] [213,240]`. Neither operation modifies BART encoding.
 
 The formal USC BART path does not use the baseline Hoge DCF, RSS, ESPIRiT, SigPy, spatial regularization, GIRF, or B0 correction. Step 2A implements this path but only dry-runs it; no BART command has been executed.
+
+## Step 2B-2 execution boundary
+
+`reconstruct_t13_slice0_tfd_bart.py --execute` is the minimal offline execution of the locked USC path: `nlinv`, USC sensitivity postprocessing, `estimate_scale_bart` on frames `5:50`, then `pics`. The scale selected by the USC median/p90/max rule is passed directly to `pics -w`; no reciprocal is introduced despite the original source variable name `inv_scl`. Native complex `[x,y,time]` is retained as the canonical result before any crop or display-only magnitude transform. The mode is deliberate opt-in and must run only in the validated BART v0.9.00 GPU environment.

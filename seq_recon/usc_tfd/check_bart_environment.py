@@ -19,7 +19,7 @@ from typing import Any
 EXPECTED_BART_VERSION = "v0.9.00"
 REQUIRED_OPTIONS = {
     "nufft": ("-g", "-x", "-a"),
-    "nlinv": ("-a", "-b", "-S", "-d", "-i", "-x", "-t"),
+    "nlinv": ("-S", "-d", "-i", "-x", "-t"),
     "pics": ("-g", "-m", "-w", "-e", "-S", "-R", "-d", "-i", "-t"),
 }
 
@@ -67,6 +67,16 @@ def _option_capabilities(commands: dict[str, dict[str, str]]) -> dict[str, dict[
         }
         for command, options in REQUIRED_OPTIONS.items()
     }
+
+
+def _nlinv_hidden_option_capabilities(executable: str | None) -> dict[str, dict[str, str]]:
+    """BART v0.9.00 accepts -a/-b although its normal help hides them."""
+    if executable is None:
+        return {option: _result(False, "bart executable unavailable") for option in ("-a", "-b")}
+    code, detail = _run([executable, "nlinv", "-a", "32", "-b", "16", "-h"])
+    rejected = any(marker in detail.lower() for marker in ("unknown option", "invalid option", "unrecognized option"))
+    accepted = code is not None and not rejected
+    return {option: _result(accepted, detail or "nlinv parser probe produced no output") for option in ("-a", "-b")}
 
 
 def _smoke_result(path: Path | None) -> dict[str, str]:
@@ -134,12 +144,15 @@ def inspect_environment(
     report["solver_commands"] = commands
     capabilities = _option_capabilities(commands)
     report["required_cli_capabilities"] = capabilities
+    hidden_nlinv_capabilities = _nlinv_hidden_option_capabilities(executable)
+    report["nlinv_hidden_option_parser_capabilities"] = hidden_nlinv_capabilities
     report["bart_gpu_smoke_test"] = _smoke_result(gpu_smoke_report)
 
     required = ("conda_environment", "BART_TOOLBOX_PATH", "bart_executable", "bart_version", "bart_version_identity", "bart_python_module", "bart_python_api", "gpu_visibility", "bart_gpu_smoke_test")
     ready = all(report[key]["status"] == "PASS" for key in required)
     ready = ready and all(item["status"] == "PASS" for item in packages.values()) and all(item["status"] == "PASS" for item in commands.values())
     ready = ready and all(item["status"] == "PASS" for command in capabilities.values() for item in command.values())
+    ready = ready and all(item["status"] == "PASS" for item in hidden_nlinv_capabilities.values())
     report["overall"] = "PASS" if ready else "FAIL"
     return report
 

@@ -30,6 +30,20 @@ class BartInputs:
     traj_all: np.ndarray        # [xyz, sample, arm_major_frame_fast]
 
 
+@dataclass(frozen=True)
+class ScaleEstimate:
+    """Source-faithful scale statistics; selected is passed directly to pics -w."""
+
+    median: float
+    p90: float
+    maximum: float
+    selected: float
+
+    @property
+    def selection_rule(self) -> str:
+        return "p90 if (max-p90) < 2*(p90-median) else max"
+
+
 def _validate_prepared_shapes(kspace: np.ndarray, trajectory: np.ndarray) -> tuple[int, int, int, int]:
     if kspace.ndim != 4 or trajectory.ndim != 4 or trajectory.shape[-1] != 2:
         raise ValueError("expected k-space [frame, arm, coil, sample] and trajectory [frame, arm, sample, 2]")
@@ -141,14 +155,18 @@ def select_usc_scale(median: float, p90: float, maximum: float) -> float:
     return p90 if (maximum - p90) < 2 * (p90 - median) else maximum
 
 
-def estimate_scale_bart(bart: Any, traj: np.ndarray, ksp: np.ndarray, sens_map: np.ndarray) -> float:
+def estimate_scale_bart(bart: Any, traj: np.ndarray, ksp: np.ndarray, sens_map: np.ndarray) -> ScaleEstimate:
     """BART-dependent, exact USC nufft-adjoint scale estimate; not called by dry-run."""
     first_it = bart.bart(1, f"nufft -g -x {sens_map.shape[0]}:{sens_map.shape[1]}:1 -a ", traj, ksp)
     first_it = np.sum(
         first_it * np.conj(sens_map[:, :, :, :, None, None, None, None, None, None, None]), axis=3
     )
     magnitudes = np.abs(first_it[:])
-    return float(select_usc_scale(np.median(magnitudes), np.percentile(magnitudes, 90), np.max(magnitudes)))
+    median, p90, maximum = (float(np.median(magnitudes)), float(np.percentile(magnitudes, 90)), float(np.max(magnitudes)))
+    selected = float(select_usc_scale(median, p90, maximum))
+    if not all(np.isfinite(value) for value in (median, p90, maximum, selected)) or selected <= 0:
+        raise ValueError("USC scale estimate must be finite and positive")
+    return ScaleEstimate(median=median, p90=p90, maximum=maximum, selected=selected)
 
 
 def nlinv_sensitivity_maps(bart: Any, traj_all: np.ndarray, ksp_all: np.ndarray, msize: int) -> np.ndarray:

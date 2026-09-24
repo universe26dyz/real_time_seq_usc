@@ -1,0 +1,16 @@
+[input]
+adc_reduction = "pair_mean"
+nominal_pre_discard = 10
+
+[reconstruction]
+arms_per_frame = 7
+num_recon_frames = 50
+base_matrix = 240
+fov_oversampling = 1.5
+crop_matrix_y = 213
+crop_matrix_x = 240
+reg_lambda_temporal = 0.0002
+reg_lambda_spatial = 0.0
+num_iter = 120
+num_chunks = 1
+apply_girf = false

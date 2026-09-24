@@ -11,11 +11,12 @@ sys.path.insert(0, str(MODULE_ROOT))
 from bart_tfd import (
     USC_KSPACE_PREFACTOR,
     build_usc_bart_inputs,
-    center_crop_native,
+    center_crop_native_xy,
     chunk_frame_indices,
     effective_temporal_lambda,
     scale_frame_indices,
     trim_chunk_overlap,
+    usc_display_transform_native_xy,
 )
 
 
@@ -31,7 +32,7 @@ def _synthetic_inputs():
     return kspace, trajectory
 
 
-def test_usc_bart_layouts_keep_frame_major_arm_order_and_prefactor():
+def test_usc_bart_layouts_keep_arm_major_frame_fast_order_and_prefactor():
     kspace, trajectory = _synthetic_inputs()
     inputs = build_usc_bart_inputs(kspace, trajectory)
 
@@ -41,9 +42,11 @@ def test_usc_bart_layouts_keep_frame_major_arm_order_and_prefactor():
     assert inputs.kloc_bart.shape == (3, 1250, 7, 1, 1, 1, 1, 1, 1, 1, 50)
     assert inputs.ksp_all.shape == (1, 1250, 350, 2)
     assert inputs.traj_all.shape == (3, 1250, 350)
-    np.testing.assert_array_equal(inputs.ksp_all[0, 0, :, 0], np.arange(350) * USC_KSPACE_PREFACTOR)
-    np.testing.assert_array_equal(inputs.traj_all[0, 0], np.arange(350))
-    np.testing.assert_array_equal(inputs.traj_all[1, 0], -np.arange(350))
+    expected_usc_order = np.arange(350).reshape(50, 7).T.reshape(-1)
+    np.testing.assert_array_equal(inputs.ksp_all[0, 0, :, 0], expected_usc_order * USC_KSPACE_PREFACTOR)
+    np.testing.assert_array_equal(inputs.ksp_all[0, 0, :, 1], expected_usc_order * USC_KSPACE_PREFACTOR + 1000j * USC_KSPACE_PREFACTOR)
+    np.testing.assert_array_equal(inputs.traj_all[0, 0], expected_usc_order)
+    np.testing.assert_array_equal(inputs.traj_all[1, 0], -expected_usc_order)
     np.testing.assert_array_equal(inputs.traj_all[2], 0)
     assert kspace[1, 0, 0, 0] == 7
 
@@ -65,10 +68,16 @@ def test_temporal_lambda_scale_frames_and_usc_chunk_overlap():
     assert trim_chunk_overlap(np.ones((2, 2, 7)), 2, 3).shape[-1] == 4
     with pytest.raises(ValueError, match="divisible"):
         chunk_frame_indices(50, 3)
+    np.testing.assert_array_equal(scale_frame_indices(frames_per_chunk=8), np.array([5, 6, 7]))
 
 
-def test_native_center_crop_has_deterministic_360_to_213x240_indices():
-    native = np.arange(360 * 360).reshape(360, 360)
-    cropped = center_crop_native(native, (213, 240))
-    assert cropped.shape == (213, 240)
-    np.testing.assert_array_equal(cropped, native[73:286, 60:300])
+def test_native_xy_crop_and_separate_usc_display_transform_have_deterministic_axes():
+    native = np.arange(360 * 360 * 2).reshape(360, 360, 2)
+    cropped = center_crop_native_xy(native, (240, 213))
+    assert cropped.shape == (240, 213, 2)
+    np.testing.assert_array_equal(cropped, native[60:300, 73:286, :])
+
+    display = usc_display_transform_native_xy(cropped)
+    assert display.shape == (213, 240, 2)
+    np.testing.assert_array_equal(display[0, 0], cropped[-1, 0])
+    np.testing.assert_array_equal(display[-1, -1], cropped[0, -1])

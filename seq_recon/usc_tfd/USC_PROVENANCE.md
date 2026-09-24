@@ -10,7 +10,7 @@ Supporting source inspected: `reconutils.py`
 `bart_tfd.py` is an offline port of these blocks in `rtspiral_bart_tvrecon.py`:
 
 - `data = np.array(data) * 1e3`, dynamic `[sample, arm, coil, time]` BART layout, zero-kz trajectory construction, and 11-dimensional `pics` singleton layout;
-- all-frame `ksp_all` and `traj_all` preparation for `nlinv`;
+- all-frame `ksp_all` and `traj_all` preparation for `nlinv`, including the source's arm-major/frame-fast merged acquisition dimension (`arm 0: frame 0..49`, then arm 1);
 - exact `nlinv -a 32 -b 16 -S -d4 -i13 -x 32:32:1 -t` call and the IFFT → 720 resize → FFT → 360 resize → `normalize 8` sensitivity-map path;
 - `estimate_scale_bart()`'s adjoint-NUFFT command and median/p90/max conditional;
 - temporal `pics` command construction, including `reg_lambda_temporal * n_frame_per_chunk` and optional `-R W:3:0:<lambda>` branch;
@@ -23,8 +23,8 @@ Supporting source inspected: `reconutils.py`
 - MRD streaming becomes a prepared offline NPZ; no H5/MAT parsing occurs in the BART core.
 - UIH 2520-to-1260 `pair_mean` ADC adaptation and nominal pre-discard occur upstream in Step 1.
 - The trajectory is the Step-1 `[kx,-ky]` trajectory, already scaled to the 360 working matrix; no GIRF or B0 correction is added.
-- Reconstruction is fixed at 50 offline frames rather than an incoming runtime stream. The all-frame `nlinv` arrays retain Step-1 frame-major acquisition order.
-- Future native complex arrays are saved to disk, not converted to MRD images. Any USC display flip/transpose is intentionally separate from the native BART orientation.
-- A deterministic centered `[360,360] -> [213,240]` crop is applied only after native solving. It does not modify BART encoding.
+- Reconstruction is fixed at 50 offline frames rather than an incoming runtime stream. Step-1 remains frame-major, but the `nlinv` merge reproduces USC's arm-major/frame-fast order from the dynamic arrays.
+- Future native complex arrays are saved to disk with BART spatial axes `[x/read, y/phase, time]`, not converted to MRD images. USC display orientation is a separate flip of native x followed by an x/y swap.
+- The native centered crop is `[x,y] [360,360] -> [240,213]` (x `60:300`, y `73:286`); the separate USC display transform produces `[y,x] [213,240]`. Neither operation modifies BART encoding.
 
 The formal USC BART path does not use the baseline Hoge DCF, RSS, ESPIRiT, SigPy, spatial regularization, GIRF, or B0 correction. Step 2A implements this path but only dry-runs it; no BART command has been executed.

@@ -26,8 +26,8 @@ class BartInputs:
     kdata_bart: np.ndarray      # [1, sample, arm, coil, 1, 1, 1, 1, 1, 1, time]
     kloc_semantic: np.ndarray   # [xyz, sample, arm, time]
     kloc_bart: np.ndarray       # [xyz, sample, arm, 1, 1, 1, 1, 1, 1, 1, time]
-    ksp_all: np.ndarray         # [1, sample, all_frame_major_arms, coil]
-    traj_all: np.ndarray        # [xyz, sample, all_frame_major_arms]
+    ksp_all: np.ndarray         # [1, sample, arm_major_frame_fast, coil]
+    traj_all: np.ndarray        # [xyz, sample, arm_major_frame_fast]
 
 
 def _validate_prepared_shapes(kspace: np.ndarray, trajectory: np.ndarray) -> tuple[int, int, int, int]:
@@ -45,10 +45,9 @@ def build_usc_bart_inputs(kspace_frames: np.ndarray, trajectory_frames: np.ndarr
     """Build USC BART arrays from Step-1 [F,A,C,S] and [F,A,S,2] inputs.
 
     The dynamic arrays follow the pinned source's [S,A,C,F] and [3,S,A,F]
-    layout verbatim.  The static nlinv arrays combine all acquisitions in
-    original frame-major order (frame 0 arms 0..A-1, then frame 1) so the
-    corresponding k-space and trajectory samples retain their acquisition
-    pairing in the offline package.
+    layout verbatim.  The static nlinv arrays are derived from those dynamic
+    layouts exactly as in USC: arm-major, frame-fast (arm 0 frames 0..F-1,
+    then arm 1).  K-space and trajectory use the same merged ordering.
     """
     kspace = np.asarray(kspace_frames)
     trajectory = np.asarray(trajectory_frames)
@@ -65,11 +64,11 @@ def build_usc_bart_inputs(kspace_frames: np.ndarray, trajectory_frames: np.ndarr
     kloc_semantic = np.transpose(kloc_frame_arm_sample_xyz, (3, 2, 1, 0))
     kloc_bart = kloc_semantic[:, :, :, None, None, None, None, None, None, None, :]
 
-    # nlinv has no time dimension.  Keep frame-major acquisition order as in Step 1.
-    ksp_all = np.transpose(formal_data, (0, 1, 3, 2)).reshape(frames * arms, samples, coils)
-    ksp_all = np.transpose(ksp_all, (1, 0, 2))[None, :, :, :]
-    traj_all = kloc_frame_arm_sample_xyz.reshape(frames * arms, samples, 3)
-    traj_all = np.transpose(traj_all, (2, 1, 0))
+    # USC source: transpose [S,A,C,F] -> [S,A,F,C], then reshape A*F.
+    # The result is arm-major/frame-fast, not Step-1's frame-major ordering.
+    ksp_all = np.transpose(kdata_semantic, (0, 1, 3, 2)).reshape(1, samples, arms * frames, coils)
+    # USC source: reshape the existing [3,S,A,F] dynamic trajectory directly.
+    traj_all = kloc_semantic.reshape(3, samples, arms * frames)
 
     expected_dynamic = (samples, arms, coils, frames)
     if kdata_semantic.shape != expected_dynamic or kloc_semantic.shape != (3, samples, arms, frames):
@@ -85,10 +84,11 @@ def effective_temporal_lambda(reg_lambda_temporal: float, frames_per_chunk: int)
     return float(reg_lambda_temporal) * frames_per_chunk
 
 
-def scale_frame_indices(num_frames: int, excluded_initial_frames: int = 5) -> np.ndarray:
-    if num_frames <= excluded_initial_frames:
+def scale_frame_indices(frames_per_chunk: int, excluded_initial_frames: int = 5) -> np.ndarray:
+    """USC scale-estimation frames 5:n_frame_per_chunk from the first chunk."""
+    if frames_per_chunk <= excluded_initial_frames:
         raise ValueError("not enough frames after excluding initial scale-estimation frames")
-    return np.arange(excluded_initial_frames, num_frames, dtype=np.int64)
+    return np.arange(excluded_initial_frames, frames_per_chunk, dtype=np.int64)
 
 
 def chunk_frame_indices(num_frames: int, num_chunks: int, overlap: int = 3) -> list[np.ndarray]:
@@ -163,10 +163,17 @@ def nlinv_sensitivity_maps(bart: Any, traj_all: np.ndarray, ksp_all: np.ndarray,
     return bart.bart(1, "normalize 8", sens)
 
 
-def center_crop_native(native: np.ndarray, crop_yx: Sequence[int]) -> np.ndarray:
-    """Crop native complex BART [y,x,...] arrays without display reorientation."""
-    crop_y, crop_x = (int(crop_yx[0]), int(crop_yx[1]))
-    if native.ndim < 2 or crop_y > native.shape[0] or crop_x > native.shape[1]:
+def center_crop_native_xy(native: np.ndarray, crop_xy: Sequence[int]) -> np.ndarray:
+    """Crop native complex BART [x/read, y/phase, ...] without display orientation."""
+    crop_x, crop_y = (int(crop_xy[0]), int(crop_xy[1]))
+    if native.ndim < 2 or crop_x > native.shape[0] or crop_y > native.shape[1]:
         raise ValueError("crop must fit the first two native BART dimensions")
-    start_y, start_x = (native.shape[0] - crop_y) // 2, (native.shape[1] - crop_x) // 2
-    return native[start_y:start_y + crop_y, start_x:start_x + crop_x, ...]
+    start_x, start_y = (native.shape[0] - crop_x) // 2, (native.shape[1] - crop_y) // 2
+    return native[start_x:start_x + crop_x, start_y:start_y + crop_y, ...]
+
+
+def usc_display_transform_native_xy(native: np.ndarray) -> np.ndarray:
+    """USC process_group spatial transform: native [x,y,...] -> display [y,x,...]."""
+    if native.ndim < 2:
+        raise ValueError("native BART result must have x and y axes")
+    return np.flip(native, axis=0).swapaxes(0, 1)
